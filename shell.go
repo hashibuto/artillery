@@ -15,7 +15,8 @@ var (
 )
 
 type Shell struct {
-	promptText string
+	promptText    string
+	commandLookup map[string]*Command
 }
 
 // SetPrompt sets the prompt text, which will be displayed the next time the prompt is rendered
@@ -32,6 +33,27 @@ func GetInstance() *Shell {
 		inst = &Shell{
 			promptText: term.Sprint(term.Red, "🩥  ", term.Reset),
 		}
+
+		inst.AddCommand(&Command{
+			Name:        "help",
+			Description: "display the command set, and contextual help",
+			Options: []*Option{
+				{
+					ShortName:   'v',
+					Name:        "verbose",
+					Description: "show verbose help",
+					Default:     false,
+					Value:       true,
+				},
+			},
+			Arguments: []*Argument{
+				{
+					Name:        "command",
+					Description: "command and subcommand if available",
+					NArgs:       true,
+				},
+			},
+		})
 	}
 
 	return inst
@@ -39,6 +61,17 @@ func GetInstance() *Shell {
 
 // AddCommand adds a command to the shell.  If the command is in some way invalid, an error will be returne here.
 func (s *Shell) AddCommand(cmd *Command) error {
+	err := cmd.Validate()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := s.commandLookup[cmd.Name]; exists {
+		return fmt.Errorf("Command named %s already declared", cmd.Name)
+	}
+
+	s.commandLookup[cmd.Name] = cmd
+
 	return nil
 }
 

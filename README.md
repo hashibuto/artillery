@@ -1,2 +1,2 @@
 # artillery
-A shell module for golang
+An interactive shell for golang

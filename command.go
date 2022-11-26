@@ -18,14 +18,18 @@ const (
 	Float  ArgType = "float"
 )
 
+type Namespace map[string]any
+
 type Command struct {
 	Name        string
+	Group       string // If specified, group will be presented in the help and similar items will be displayed together
 	Description string
 	SubCommands []*Command
 
 	// Commands which have subcommands cannot have any of the following
 	Options   []*Option
 	Arguments []*Argument
+	OnExecute func(any, Namespace)
 }
 
 // Validate establishes the validity of the command and returns an error on the first violation
@@ -38,6 +42,9 @@ func (cmd *Command) Validate() error {
 	}
 
 	if cmd.SubCommands != nil && len(cmd.SubCommands) > 0 {
+		if cmd.OnExecute != nil {
+			return fmt.Errorf("Commands with subcommands cannot declare an OnExecute function")
+		}
 		if cmd.Options != nil && len(cmd.Options) > 0 {
 			return fmt.Errorf("Commands with subcommands cannot have their own options")
 		}
@@ -75,10 +82,12 @@ func (cmd *Command) Validate() error {
 }
 
 type Option struct {
-	ShortName byte
-	Name      string
-	Type      ArgType
-	Value     any // When value is specified, the option has an implicit value and cannot be provided with --opt=value
+	ShortName   byte
+	Name        string
+	Description string
+	Type        ArgType
+	Value       any // When value is specified, the option has an implicit value and cannot be provided with --opt=value
+	Default     any
 }
 
 // Validate ensures the validity of the option
@@ -88,12 +97,16 @@ func (opt *Option) Validate() error {
 		return fmt.Errorf("Option short names can only contain A-Z, a-z, 0-9 and _")
 	}
 
-	if len(opt.Name) > 2 {
+	if len(opt.Name) < 2 {
 		return fmt.Errorf("Option names must be at least 2 characters long")
 	}
 
 	if !validOptionName.MatchString(opt.Name) {
 		return fmt.Errorf("Option names can only contain A-Z, a-z, 0-9 and _")
+	}
+
+	if opt.Description == "" {
+		return fmt.Errorf("Option must have a description")
 	}
 
 	if opt.Value != nil {
@@ -112,7 +125,8 @@ func (opt *Option) Validate() error {
 
 type Argument struct {
 	Name           string
-	Type           ArgType
+	Description    string
+	Type           ArgType                      // String is the default argument type
 	Default        any                          // Default value (only valid in the final argument position)
 	MemberOf       []string                     // When value must be a member of a limited collection (strings only)
 	CompletionFunc func(prefix string) []string // Used to autocomplete if set (cannot be used together with MemberOf)
@@ -121,7 +135,7 @@ type Argument struct {
 
 // Validate ensures the validity of the argument
 func (arg *Argument) Validate(isLast bool) error {
-	if len(arg.Name) > 2 {
+	if len(arg.Name) < 2 {
 		return fmt.Errorf("Option names must be at least 2 characters long")
 	}
 
@@ -137,6 +151,10 @@ func (arg *Argument) Validate(isLast bool) error {
 		if arg.NArgs != false {
 			return fmt.Errorf("NArgs can only be true when in the final argument position")
 		}
+	}
+
+	if arg.Description == "" {
+		return fmt.Errorf("Argument must have a description")
 	}
 
 	return nil

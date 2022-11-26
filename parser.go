@@ -21,35 +21,69 @@ type OptionInput struct {
 	Value string
 }
 
-func parse(cmd string) ([]*OptionInput, []string, error) {
+// group attempts to group tokens into either options or positional arguments.  group will error if
+// positional arguments precede options.
+func group(tokens []any) ([]*OptionInput, []string, error) {
 	options := []*OptionInput{}
 	args := []string{}
-	tokens, err := tokenize(cmd)
-	if err != nil {
-		return nil, nil, err
+
+	argsStarted := false
+	for _, token := range tokens {
+		switch t := token.(type) {
+		case string:
+			argsStarted = true
+			args = append(args, t)
+		case *OptionInput:
+			if argsStarted {
+				return nil, nil, fmt.Errorf("Options must precede positional arguments")
+			}
+			options = append(options, t)
+		default:
+			return nil, nil, fmt.Errorf("Unexpected token type %T", t)
+		}
 	}
 
-	startedPosArgs := false
+	return options, args, nil
+}
+
+// extractCommand attempts to extract a command from the token collection and returns the command
+// along with the remaining tokens
+func extractCommand(tokens []any) (string, []any, error) {
+	if len(tokens) == 0 {
+		return "", nil, fmt.Errorf("No command available")
+	}
+
+	cmdStr := tokens[0]
+	switch t := cmdStr.(type) {
+	case string:
+		return t, tokens[1:], nil
+	default:
+		return "", nil, fmt.Errorf("Argument was not a command")
+	}
+}
+
+// parse linearly extracts options and arguments from the provided command string
+func parse(cmd string) ([]any, error) {
+	output := []any{}
+	tokens, err := tokenize(cmd)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, token := range tokens {
 		matches := optionParser.FindAllStringSubmatch(token, -1)
-		if matches == nil {
-			startedPosArgs = true
-		} else if startedPosArgs {
-			return nil, nil, fmt.Errorf("Options cannot be preceded by positional arguments")
-		}
-
 		if matches != nil {
 			inner := matches[0]
 			// Single character option
 			if inner[2] != "" {
-				options = append(options, &OptionInput{
+				output = append(output, &OptionInput{
 					Name: inner[2],
 				})
 			}
 
 			// Single character option with equals
 			if inner[4] != "" {
-				options = append(options, &OptionInput{
+				output = append(output, &OptionInput{
 					Name:  inner[4],
 					Value: inner[5],
 				})
@@ -58,7 +92,7 @@ func parse(cmd string) ([]*OptionInput, []string, error) {
 			// Grouped single options
 			if inner[7] != "" {
 				for _, c := range inner[7] {
-					options = append(options, &OptionInput{
+					output = append(output, &OptionInput{
 						Name: string(c),
 					})
 				}
@@ -66,23 +100,23 @@ func parse(cmd string) ([]*OptionInput, []string, error) {
 
 			// Long form option
 			if inner[9] != "" {
-				options = append(options, &OptionInput{
+				output = append(output, &OptionInput{
 					Name: inner[9],
 				})
 			}
 
 			// Long form option with equals
 			if inner[11] != "" {
-				options = append(options, &OptionInput{
+				output = append(output, &OptionInput{
 					Name:  inner[11],
 					Value: inner[12],
 				})
 			}
 		} else {
-			args = append(args, token)
+			output = append(output, token)
 		}
 	}
-	return options, args, nil
+	return output, nil
 }
 
 // tokenize breaks the command into individual tokens, preserving quoted areas

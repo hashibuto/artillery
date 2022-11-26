@@ -42,7 +42,12 @@ func TestQuoteMismatch(t *testing.T) {
 
 func TestParser(t *testing.T) {
 	cmd := "-a -b hello world"
-	opts, args, err := parse(cmd)
+	all, err := parse(cmd)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	opts, args, err := group(all)
 	if err != nil {
 		t.Error(err)
 		return
@@ -86,7 +91,12 @@ func TestParser(t *testing.T) {
 
 func TestParser2(t *testing.T) {
 	cmd := "-abc hello world"
-	opts, args, err := parse(cmd)
+	all, err := parse(cmd)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	opts, args, err := group(all)
 	if err != nil {
 		t.Error(err)
 		return
@@ -134,7 +144,12 @@ func TestParser2(t *testing.T) {
 
 func TestParser3(t *testing.T) {
 	cmd := "-a=123 -b=344 hello world"
-	opts, args, err := parse(cmd)
+	all, err := parse(cmd)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	opts, args, err := group(all)
 	if err != nil {
 		t.Error(err)
 		return
@@ -182,7 +197,12 @@ func TestParser3(t *testing.T) {
 
 func TestParser4(t *testing.T) {
 	cmd := "--hello=world -a=3"
-	opts, args, err := parse(cmd)
+	all, err := parse(cmd)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	opts, args, err := group(all)
 	if err != nil {
 		t.Error(err)
 		return
@@ -217,7 +237,12 @@ func TestParser4(t *testing.T) {
 
 func TestParserQuotes(t *testing.T) {
 	cmd := "\"--hello=world hello\" -a=3"
-	opts, args, err := parse(cmd)
+	all, err := parse(cmd)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	opts, args, err := group(all)
 	if err != nil {
 		t.Error(err)
 		return
