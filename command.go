@@ -117,6 +117,16 @@ func (cmd *Command) Validate() error {
 // specified rules.
 func (cmd *Command) Execute(tokens []any) error {
 	namespace := Namespace{}
+	if cmd.Arguments != nil {
+		for _, arg := range cmd.Arguments {
+			arg.ApplyDefault(namespace)
+		}
+	}
+	if cmd.Options != nil {
+		for _, opt := range cmd.Options {
+			opt.ApplyDefault(namespace)
+		}
+	}
 
 	if cmd.SubCommands != nil && len(cmd.SubCommands) > 0 {
 		// Attempt to look up a subcommand
@@ -156,47 +166,30 @@ func (cmd *Command) Execute(tokens []any) error {
 
 		switch t := optDef.(type) {
 		case *Option:
-
+			err = t.Apply(opt, namespace)
+			if err != nil {
+				return err
+			}
 		default:
 			return fmt.Errorf("Option --%s is not recognized", optName)
 		}
 	}
 
-	return nil
-}
+	for idx, arg := range args {
+		if cmd.Arguments != nil {
+			ix := idx
+			if ix >= len(cmd.Arguments) {
+				ix = len(cmd.Arguments) - 1
+				if !cmd.Arguments[ix].IsArray {
+					return fmt.Errorf("Unexpected argument \"%s\"", arg)
+				}
+			}
 
-type Argument struct {
-	Name           string
-	Description    string
-	Type           ArgType                      // String is the default argument type
-	Default        any                          // Default value (only valid in the final argument position)
-	MemberOf       []string                     // When value must be a member of a limited collection (strings only)
-	CompletionFunc func(prefix string) []string // Used to autocomplete if set (cannot be used together with MemberOf)
-	NArgs          bool                         // When true, argument becomes an array (must be in the final argument position)
-}
-
-// Validate ensures the validity of the argument
-func (arg *Argument) Validate(isLast bool) error {
-	if len(arg.Name) < 2 {
-		return fmt.Errorf("Option names must be at least 2 characters long")
-	}
-
-	if arg.MemberOf != nil && len(arg.MemberOf) > 0 && arg.CompletionFunc != nil {
-		return fmt.Errorf("MemberOf and CompletionFunc cannot be used together")
-	}
-
-	if !isLast {
-		if arg.Default != nil {
-			return fmt.Errorf("Default may only be specified when it's the final argument")
+			argDef := cmd.Arguments[ix]
+			argDef.Apply(arg, namespace)
+		} else {
+			return fmt.Errorf("Unexpected argument \"%s\"", arg)
 		}
-
-		if arg.NArgs != false {
-			return fmt.Errorf("NArgs can only be true when in the final argument position")
-		}
-	}
-
-	if arg.Description == "" {
-		return fmt.Errorf("Argument must have a description")
 	}
 
 	return nil

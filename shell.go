@@ -51,7 +51,7 @@ func GetInstance() *Shell {
 				{
 					Name:        "command",
 					Description: "command and subcommand if available",
-					NArgs:       true,
+					IsArray:     true,
 				},
 			},
 		})

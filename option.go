@@ -1,6 +1,8 @@
 package artillery
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Option struct {
 	ShortName   byte
@@ -46,23 +48,27 @@ func (opt *Option) Validate() error {
 }
 
 // ApplyDefault applies the default value to the target
-func (opt *Option) ApplyDefault(target map[string]any) {
+func (opt *Option) ApplyDefault(namespace Namespace) {
 	if opt.IsArray {
-		target[opt.Name] = []string{}
+		namespace[opt.Name] = []any{}
 	} else {
-		target[opt.Name] = opt.Default
+		namespace[opt.Name] = opt.Default
 	}
 }
 
-// Apply will apply the input to the target.  If input is nil then the default will be applied
-func (opt *Option) Apply(inp *OptionInput, target map[string]any) error {
+// Apply will apply the input to the namespace.  If input is nil then the default will be applied
+func (opt *Option) Apply(inp *OptionInput, namespace Namespace) error {
 	if opt.IsArray {
 		if inp.Value == "" {
 			return fmt.Errorf("Value must be specified for option --%s", opt.Name)
 		}
 
-		targ := target[opt.Name].([]string)
-		target[opt.Name] = append(targ, inp.Value)
+		arr := namespace[opt.Name].([]any)
+		val, err := convert(inp.Value, opt.Type)
+		if err != nil {
+			return fmt.Errorf("Option -%s/--%s - %s", string(opt.ShortName), opt.Name, err)
+		}
+		namespace[opt.Name] = append(arr, val)
 		return nil
 	}
 
@@ -70,21 +76,18 @@ func (opt *Option) Apply(inp *OptionInput, target map[string]any) error {
 		if inp.Value != "" {
 			return fmt.Errorf("Option -%s/--%s does not accept an \"=\" assigment operator", string(opt.ShortName), opt.Name)
 		}
-		target[opt.Name] = opt.Value
+		namespace[opt.Name] = opt.Value
 	} else {
-		if inp.Value == "" {
+		if inp.Value == "" && opt.Default == nil {
 			return fmt.Errorf("Option -%s/--%s must specify a value by use of an \"=\" assigment operator", string(opt.ShortName), opt.Name)
 		}
 
-		if opt.Type == "" || opt.Type == String {
-			target[opt.Name] = inp.Value
-		} else {
-			switch opt.Type {
-			case Int:
-				// Do atoi
-			}
+		val, err := convert(inp.Value, opt.Type)
+		if err != nil {
+			return fmt.Errorf("Option -%s/--%s - %s", string(opt.ShortName), opt.Name, err)
 		}
 
+		namespace[opt.Name] = val
 	}
 
 	return nil

@@ -3,6 +3,7 @@ package artillery
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -161,4 +162,36 @@ func tokenize(cmd string) ([]string, error) {
 	}
 
 	return tokens, nil
+}
+
+// convert converts the provided input value to the specified argument type
+func convert(value string, argType ArgType) (any, error) {
+	if argType == "" || argType == String {
+		return value, nil
+	}
+	switch argType {
+	case Int:
+		val, err := strconv.Atoi(value)
+		if err != nil {
+			return nil, fmt.Errorf("expected an integer value")
+		}
+		return val, nil
+	case Float:
+		val, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return nil, fmt.Errorf("expected a floating point value")
+		}
+		return val, nil
+	case Bool:
+		val := strings.ToLower(value)
+		if val == "true" {
+			return true, nil
+		}
+		if val == "false" {
+			return false, nil
+		}
+		return nil, fmt.Errorf("expected a boolean value")
+	default:
+		return nil, fmt.Errorf("unexpected data type")
+	}
 }
