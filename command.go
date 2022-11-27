@@ -29,7 +29,7 @@ type Command struct {
 	// Commands which have subcommands cannot have any of the following
 	Options   []*Option
 	Arguments []*Argument
-	OnExecute func(any, Namespace)
+	OnExecute func(Namespace)
 
 	// These are computed when they are added to the shell
 	subCommandLookup  map[string]*Command
@@ -108,6 +108,10 @@ func (cmd *Command) Validate() error {
 				nameToArgOrOption[arg.Name] = arg
 			}
 		}
+	}
+
+	if cmd.OnExecute == nil {
+		return fmt.Errorf("OnExecute method is required")
 	}
 
 	return nil
@@ -191,6 +195,8 @@ func (cmd *Command) Execute(tokens []any) error {
 			return fmt.Errorf("Unexpected argument \"%s\"", arg)
 		}
 	}
+
+	cmd.OnExecute(namespace)
 
 	return nil
 }

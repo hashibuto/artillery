@@ -5,6 +5,9 @@ github.com/hashibuto/go-prompt/internal/bisect
 github.com/hashibuto/go-prompt/internal/debug
 github.com/hashibuto/go-prompt/internal/strings
 github.com/hashibuto/go-prompt/internal/term
+# github.com/hashibuto/mirage v0.2.6
+## explicit; go 1.19
+github.com/hashibuto/mirage
 # github.com/mattn/go-colorable v0.1.7
 ## explicit; go 1.13
 github.com/mattn/go-colorable
