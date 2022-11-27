@@ -30,6 +30,11 @@ type Command struct {
 	Options   []*Option
 	Arguments []*Argument
 	OnExecute func(any, Namespace)
+
+	// These are computed when they are added to the shell
+	subCommandLookup  map[string]*Command
+	shortNameToName   map[string]string
+	nameToArgOrOption map[string]any
 }
 
 // Validate establishes the validity of the command and returns an error on the first violation
@@ -52,28 +57,55 @@ func (cmd *Command) Validate() error {
 			return fmt.Errorf("Commands with subcommands cannot declare their own arguments")
 		}
 
+		cmd.subCommandLookup = map[string]*Command{}
 		for idx, subCommand := range cmd.SubCommands {
 			err := subCommand.Validate()
 			if err != nil {
 				return fmt.Errorf("Error in subcommand at position %d\n%w", idx, err)
 			}
+
+			if _, exists := cmd.subCommandLookup[subCommand.Name]; exists {
+				return fmt.Errorf("Subcommand with name \"%s\" already present on command \"%s\"", subCommand.Name, cmd.Name)
+			}
+			cmd.subCommandLookup[subCommand.Name] = subCommand
 		}
 	} else {
-		if cmd.Options != nil {
+		nameToArgOrOption := map[string]any{}
+		shortNameToName := map[string]string{}
+
+		if cmd.Options != nil && len(cmd.Options) > 0 {
+			cmd.nameToArgOrOption = nameToArgOrOption
+			cmd.shortNameToName = shortNameToName
 			for idx, opt := range cmd.Options {
 				err := opt.Validate()
 				if err != nil {
 					return fmt.Errorf("Error in command %s option %d\n%w", cmd.Name, idx, err)
 				}
+
+				if _, exists := nameToArgOrOption[opt.Name]; exists {
+					return fmt.Errorf("Argument name already exists for option \"%s\"", opt.Name)
+				}
+				nameToArgOrOption[opt.Name] = opt
+				if _, exists := shortNameToName[string(opt.ShortName)]; exists {
+					return fmt.Errorf("Short name already exists for option \"%s\"", opt.Name)
+				}
+				shortNameToName[string(opt.ShortName)] = opt.Name
 			}
 		}
 
-		if cmd.Arguments != nil {
+		if cmd.Arguments != nil && len(cmd.Arguments) > 0 {
+			cmd.nameToArgOrOption = nameToArgOrOption
+			cmd.shortNameToName = shortNameToName
 			for idx, arg := range cmd.Arguments {
 				err := arg.Validate(idx == len(cmd.Arguments)-1)
 				if err != nil {
 					return fmt.Errorf("Error in command %s argument %d\n%w", cmd.Name, idx, err)
 				}
+
+				if _, exists := nameToArgOrOption[arg.Name]; exists {
+					return fmt.Errorf("Argument name already exists for argument \"%s\"", arg.Name)
+				}
+				nameToArgOrOption[arg.Name] = arg
 			}
 		}
 	}
@@ -81,42 +113,52 @@ func (cmd *Command) Validate() error {
 	return nil
 }
 
-type Option struct {
-	ShortName   byte
-	Name        string
-	Description string
-	Type        ArgType
-	Value       any // When value is specified, the option has an implicit value and cannot be provided with --opt=value
-	Default     any
-}
+// Execute attempts to execute the supplied argument tokens after evaluating the input against the
+// specified rules.
+func (cmd *Command) Execute(tokens []any) error {
+	namespace := Namespace{}
 
-// Validate ensures the validity of the option
-func (opt *Option) Validate() error {
-	shortStr := string(opt.ShortName)
-	if !validOptionName.MatchString(shortStr) {
-		return fmt.Errorf("Option short names can only contain A-Z, a-z, 0-9 and _")
+	if cmd.SubCommands != nil && len(cmd.SubCommands) > 0 {
+		// Attempt to look up a subcommand
+		subCmdStr, tokens, err := extractCommand(tokens)
+		if err != nil {
+			return err
+		}
+		subCmd, ok := cmd.subCommandLookup[subCmdStr]
+		if !ok {
+			return fmt.Errorf("%s is not a valid subcommand of %s", subCmdStr, cmd.Name)
+		}
+		return subCmd.Execute(tokens)
 	}
 
-	if len(opt.Name) < 2 {
-		return fmt.Errorf("Option names must be at least 2 characters long")
+	// This branch of code is on a terminal command (ie. no further subcommands), so evaluate args
+	opts, args, err := group(tokens)
+	if err != nil {
+		return err
 	}
 
-	if !validOptionName.MatchString(opt.Name) {
-		return fmt.Errorf("Option names can only contain A-Z, a-z, 0-9 and _")
-	}
+	for _, opt := range opts {
+		var optName string
+		var ok bool
+		if len(opt.Name) == 1 {
+			optName, ok = cmd.shortNameToName[opt.Name]
+			if !ok {
+				return fmt.Errorf("Option -%s is not recognized", opt.Name)
+			}
+		} else {
+			optName = opt.Name
+		}
 
-	if opt.Description == "" {
-		return fmt.Errorf("Option must have a description")
-	}
+		optDef, ok := cmd.nameToArgOrOption[optName]
+		if !ok {
+			return fmt.Errorf("Option --%s is not recognized", optName)
+		}
 
-	if opt.Value != nil {
-		switch opt.Value.(type) {
-		case int:
-		case string:
-		case bool:
-		case float64:
+		switch t := optDef.(type) {
+		case *Option:
+
 		default:
-			return fmt.Errorf("Default value must be one of int, string, bool, or float64 types")
+			return fmt.Errorf("Option --%s is not recognized", optName)
 		}
 	}
 

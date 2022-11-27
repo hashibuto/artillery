@@ -31,7 +31,8 @@ func GetInstance() *Shell {
 
 	if inst == nil {
 		inst = &Shell{
-			promptText: term.Sprint(term.Red, "🩥  ", term.Reset),
+			promptText:    term.Sprint(term.Red, "🩥  ", term.Reset),
+			commandLookup: map[string]*Command{},
 		}
 
 		inst.AddCommand(&Command{
@@ -86,6 +87,29 @@ func (s *Shell) Repl() {
 		}
 		if input == "exit" {
 			break
+		}
+
+		// Parse input
+		tokens, err := parse(input)
+		if err != nil {
+			term.Println(term.Red, err, term.Reset)
+			continue
+		}
+		cmdStr, tokens, err := extractCommand(tokens)
+		if err != nil {
+			term.Println(term.Red, err, term.Reset)
+			continue
+		}
+
+		cmd, ok := s.commandLookup[cmdStr]
+		if !ok {
+			term.Println(term.Red, "Command \"", cmdStr, "\" not found", term.Reset)
+			continue
+		}
+		err = cmd.Execute(tokens)
+		if err != nil {
+			term.Println(term.Red, err, term.Reset)
+			continue
 		}
 	}
 
