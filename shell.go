@@ -2,6 +2,8 @@ package artillery
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"os/exec"
 	"sync"
 
@@ -35,26 +37,15 @@ func GetInstance() *Shell {
 			commandLookup: map[string]*Command{},
 		}
 
-		inst.AddCommand(&Command{
-			Name:        "help",
-			Description: "display the command set, and contextual help",
-			Options: []*Option{
-				{
-					ShortName:   'v',
-					Name:        "verbose",
-					Description: "show verbose help",
-					Default:     false,
-					Value:       true,
-				},
-			},
-			Arguments: []*Argument{
-				{
-					Name:        "command",
-					Description: "command and subcommand if available",
-					IsArray:     true,
-				},
-			},
-		})
+		err := inst.AddCommand(makeHelpCommand())
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = inst.AddCommand(makeExitCommand())
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	return inst
@@ -85,9 +76,6 @@ func (s *Shell) Repl() {
 		if shouldExit {
 			break
 		}
-		if input == "exit" {
-			break
-		}
 
 		// Parse input
 		tokens, err := parse(input)
@@ -95,6 +83,11 @@ func (s *Shell) Repl() {
 			term.Println(term.Red, err, term.Reset)
 			continue
 		}
+
+		if len(tokens) == 0 {
+			continue
+		}
+
 		cmdStr, tokens, err := extractCommand(tokens)
 		if err != nil {
 			term.Println(term.Red, err, term.Reset)
@@ -112,9 +105,14 @@ func (s *Shell) Repl() {
 			continue
 		}
 	}
+	s.Exit(0)
+}
 
+// Exit exits the shell, cleaning up the terminal in the process
+func (s *Shell) Exit(statusCode int) {
 	cmd := exec.Command("reset")
 	cmd.Run()
+	os.Exit(statusCode)
 }
 
 func (s *Shell) executor(cmd string) {

@@ -29,7 +29,7 @@ type Command struct {
 	// Commands which have subcommands cannot have any of the following
 	Options   []*Option
 	Arguments []*Argument
-	OnExecute func(Namespace)
+	OnExecute func(Namespace) error
 
 	// These are computed when they are added to the shell
 	subCommandLookup  map[string]*Command
