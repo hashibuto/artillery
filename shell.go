@@ -17,13 +17,19 @@ var (
 )
 
 type Shell struct {
-	promptText    string
-	commandLookup map[string]*Command
+	defaultHeading string
+	promptText     string
+	commandLookup  map[string]*Command
 }
 
 // SetPrompt sets the prompt text, which will be displayed the next time the prompt is rendered
 func (s *Shell) SetPrompt(promptText string) {
 	s.promptText = promptText
+}
+
+// SetDefaultHeading sets the default heading for ungrouped commands
+func (s *Shell) SetDefaultHeading(defaultHeading string) {
+	s.defaultHeading = defaultHeading
 }
 
 // GetInstance returns a singleton shell instance

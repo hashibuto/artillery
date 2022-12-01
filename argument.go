@@ -48,6 +48,19 @@ func (arg *Argument) ApplyDefault(namespace Namespace) {
 	}
 }
 
+// Usage displays the usage pattern string
+func (arg *Argument) Usage() string {
+	if arg.Default != nil {
+		return fmt.Sprintf("[%s]", arg.Name)
+	}
+
+	if arg.IsArray == true {
+		return fmt.Sprintf("<%s...>", arg.Name)
+	}
+
+	return fmt.Sprintf("<%s>", arg.Name)
+}
+
 // Apply will apply the input to the target.  If input is nil then the default will be applied
 func (arg *Argument) Apply(inp string, namespace Namespace) error {
 	val, err := convert(inp, arg.Type)

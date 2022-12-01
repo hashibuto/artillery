@@ -13,6 +13,7 @@ type Table struct {
 	columns      []string
 	columnWidths []int
 	rows         [][]string
+	HideHeading  bool
 }
 
 // NewTable creates a new table object
@@ -48,7 +49,9 @@ func (t *Table) Render() {
 	for idx, col := range t.columns {
 		values[idx] = fmt.Sprintf("%s%s", strings.ToUpper(col), strings.Repeat(" ", t.columnWidths[idx]-len(col)))
 	}
-	Println(Bold, Underline, White, strings.Join(values, strings.Repeat(" ", gutter)), Reset)
+	if !t.HideHeading {
+		Println(Bold, Underline, White, strings.Join(values, strings.Repeat(" ", gutter)), Reset)
+	}
 	for _, row := range t.rows {
 		for idx := range t.columns {
 			col := row[idx]

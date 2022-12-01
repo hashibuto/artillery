@@ -38,12 +38,12 @@ func makeHelpCommand() *Command {
 			if err != nil {
 				return err
 			}
+			shell := GetInstance()
 
 			if len(helpArgs.Command) == 0 {
 				fmt.Println()
 				groups := []string{}
 				byGroup := map[string][]*Command{}
-				shell := GetInstance()
 				for _, cmd := range shell.commandLookup {
 					_, ok := byGroup[cmd.Group]
 					if !ok {
@@ -68,16 +68,34 @@ func makeHelpCommand() *Command {
 				for _, groupName := range groups {
 					group := byGroup[groupName]
 					if groupName == "" {
-						groupName = "Commands"
+						if shell.defaultHeading == "" {
+							groupName = "commands"
+						} else {
+							groupName = shell.defaultHeading
+						}
 					}
 					term.Print(term.Bold, term.Blue, groupName, "\n\n", term.Reset)
 					table := term.NewTable("command", "description")
+					table.HideHeading = true
 					for _, cmd := range group {
 						table.Append(cmd.Name, cmd.Description)
 					}
 					table.Render()
 					fmt.Println()
 				}
+			} else {
+				var curCommand *Command
+				var ok bool
+				curLookup := shell.commandLookup
+				for _, cmdName := range helpArgs.Command {
+					cmdNameStr := cmdName.(string)
+					curCommand, ok = curLookup[cmdNameStr]
+					if !ok {
+						return fmt.Errorf("Unknown command or subcommand \"%s\"", cmdNameStr)
+					}
+					curLookup = curCommand.subCommandLookup
+				}
+				curCommand.DisplayHelp()
 			}
 
 			return nil

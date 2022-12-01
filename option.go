@@ -17,8 +17,10 @@ type Option struct {
 // Validate ensures the validity of the option
 func (opt *Option) Validate() error {
 	shortStr := string(opt.ShortName)
-	if !validOptionName.MatchString(shortStr) {
-		return fmt.Errorf("Option short names can only contain A-Z, a-z, 0-9 and _")
+	if opt.ShortName != 0 {
+		if !validOptionName.MatchString(shortStr) {
+			return fmt.Errorf("Option short names can only contain A-Z, a-z, 0-9 and _")
+		}
 	}
 
 	if len(opt.Name) < 2 {
@@ -60,13 +62,13 @@ func (opt *Option) ApplyDefault(namespace Namespace) {
 func (opt *Option) Apply(inp *OptionInput, namespace Namespace) error {
 	if opt.IsArray {
 		if inp.Value == "" {
-			return fmt.Errorf("Value must be specified for option --%s", opt.Name)
+			return fmt.Errorf("Value must be specified for option %s", opt.InvocationDisplay())
 		}
 
 		arr := namespace[opt.Name].([]any)
 		val, err := convert(inp.Value, opt.Type)
 		if err != nil {
-			return fmt.Errorf("Option -%s/--%s - %s", string(opt.ShortName), opt.Name, err)
+			return fmt.Errorf("Option %s - %s", opt.InvocationDisplay(), err)
 		}
 		namespace[opt.Name] = append(arr, val)
 		return nil
@@ -74,21 +76,65 @@ func (opt *Option) Apply(inp *OptionInput, namespace Namespace) error {
 
 	if opt.Value != nil {
 		if inp.Value != "" {
-			return fmt.Errorf("Option -%s/--%s does not accept an \"=\" assigment operator", string(opt.ShortName), opt.Name)
+			return fmt.Errorf("Option %s does not accept an \"=\" assigment operator", opt.InvocationDisplay())
 		}
 		namespace[opt.Name] = opt.Value
 	} else {
 		if inp.Value == "" && opt.Default == nil {
-			return fmt.Errorf("Option -%s/--%s must specify a value by use of an \"=\" assigment operator", string(opt.ShortName), opt.Name)
+			return fmt.Errorf("Option %s must specify a value by use of an \"=\" assigment operator", opt.InvocationDisplay())
 		}
 
 		val, err := convert(inp.Value, opt.Type)
 		if err != nil {
-			return fmt.Errorf("Option -%s/--%s - %s", string(opt.ShortName), opt.Name, err)
+			return fmt.Errorf("Option %s - %s", opt.InvocationDisplay(), err)
 		}
 
 		namespace[opt.Name] = val
 	}
 
 	return nil
+}
+
+// InvocationDisplay returns the help name for the option
+func (opt *Option) InvocationDisplay() string {
+	extra := ""
+	if opt.Default != nil {
+		extra = fmt.Sprintf("=%s", opt.DefaultValueDisplay())
+	} else {
+		extra = fmt.Sprintf("=<%s>", opt.ArgTypeDisplay())
+	}
+
+	if opt.ShortName != 0 {
+		return fmt.Sprintf("-%s, --%s%s", string(opt.ShortName), opt.Name, extra)
+	}
+	return fmt.Sprintf("--%s%s", opt.Name, extra)
+}
+
+// ArgTypeDisplay returns the argument data type for display
+func (opt *Option) ArgTypeDisplay() string {
+	switch opt.Type {
+	case "":
+		return string(String)
+	default:
+		return string(opt.Type)
+	}
+}
+
+// DefaultValueDisplay returns the default value for display purposes
+func (opt *Option) DefaultValueDisplay() string {
+	switch t := opt.Default.(type) {
+	case string:
+		return fmt.Sprintf("'%s'", t)
+	case int:
+		return fmt.Sprintf("%d", t)
+	case float64:
+		return fmt.Sprintf("%0.3f", t)
+	case bool:
+		if opt.Default == true {
+			return "true"
+		}
+		return "false"
+	default:
+		return fmt.Sprintf("%v", t)
+	}
 }

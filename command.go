@@ -3,7 +3,9 @@ package artillery
 import (
 	"fmt"
 	"regexp"
+	"sort"
 
+	"github.com/hashibuto/artillery/pkg/term"
 	"github.com/hashibuto/go-prompt"
 )
 
@@ -73,6 +75,10 @@ func (cmd *Command) Validate() error {
 		nameToArgOrOption := map[string]any{}
 		shortNameToName := map[string]string{}
 
+		if cmd.OnExecute == nil {
+			return fmt.Errorf("OnExecute method is required")
+		}
+
 		if cmd.Options != nil && len(cmd.Options) > 0 {
 			cmd.nameToArgOrOption = nameToArgOrOption
 			cmd.shortNameToName = shortNameToName
@@ -110,11 +116,76 @@ func (cmd *Command) Validate() error {
 		}
 	}
 
-	if cmd.OnExecute == nil {
-		return fmt.Errorf("OnExecute method is required")
-	}
-
 	return nil
+}
+
+func (cmd *Command) DisplayHelp() {
+	term.Print(term.Blue, cmd.Description, term.Reset, "\n\n")
+	fmt.Println("usage:")
+	fmt.Print(cmd.Name)
+	if cmd.SubCommands != nil && len(cmd.SubCommands) > 0 {
+		fmt.Printf(" <subcommand>\n\n")
+		subCommands := make([]*Command, len(cmd.SubCommands))
+		for idx, sub := range cmd.SubCommands {
+			subCommands[idx] = sub
+		}
+		sort.Slice(subCommands, func(i, j int) bool {
+			return subCommands[i].Name < subCommands[j].Name
+		})
+		fmt.Println("subcommands:")
+		table := term.NewTable("subcommand", "description")
+		table.HideHeading = true
+		for _, subCommand := range subCommands {
+			table.Append(subCommand.Name, subCommand.Description)
+		}
+		table.Render()
+	} else {
+		options := []*Option{}
+		args := []*Argument{}
+
+		if cmd.Options != nil && len(cmd.Options) > 0 {
+			fmt.Print(" [<options...>]")
+			for _, opt := range cmd.Options {
+				options = append(options, opt)
+			}
+		}
+		if cmd.Arguments != nil && len(cmd.Arguments) > 0 {
+			for _, arg := range cmd.Arguments {
+				fmt.Printf(" %s", arg.Usage())
+				args = append(args, arg)
+			}
+		}
+		fmt.Printf("\n\n")
+
+		if len(args) > 0 {
+			fmt.Println("arguments:")
+			sort.Slice(args, func(i, j int) bool {
+				return args[i].Name < args[j].Name
+			})
+			table := term.NewTable("", "name", "description")
+			table.HideHeading = true
+			for _, arg := range args {
+				table.Append("", arg.Name, arg.Description)
+			}
+			table.Render()
+			fmt.Println()
+		}
+
+		if len(options) > 0 {
+			fmt.Println("options:")
+			sort.Slice(options, func(i, j int) bool {
+				return options[i].Name < options[j].Name
+			})
+			table := term.NewTable("", "name", "description")
+			table.HideHeading = true
+			for _, opt := range cmd.Options {
+				table.Append("", opt.InvocationDisplay(), opt.Description)
+			}
+			table.Render()
+			fmt.Println()
+		}
+	}
+	fmt.Println()
 }
 
 // Execute attempts to execute the supplied argument tokens after evaluating the input against the
@@ -196,9 +267,16 @@ func (cmd *Command) Execute(tokens []any) error {
 		}
 	}
 
-	cmd.OnExecute(namespace)
+	if cmd.Arguments != nil {
+		for _, arg := range cmd.Arguments {
+			v := namespace[arg.Name]
+			if v == nil {
+				return fmt.Errorf("Expected argument \"%s\"", arg.Name)
+			}
+		}
+	}
 
-	return nil
+	return cmd.OnExecute(namespace)
 }
 
 // Suggest returns options which match the filter string
