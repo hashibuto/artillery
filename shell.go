@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 
 	"github.com/hashibuto/artillery/pkg/term"
@@ -39,7 +40,7 @@ func GetInstance() *Shell {
 
 	if inst == nil {
 		inst = &Shell{
-			promptText:    term.Sprint(term.Red, "🩥  ", term.Reset),
+			promptText:    term.Sprint(term.Bold, term.Red, "🩥  ", term.Reset),
 			commandLookup: map[string]*Command{},
 		}
 
@@ -75,7 +76,18 @@ func (s *Shell) AddCommand(cmd *Command) error {
 
 // Repl performs the Read/Eval/Print/Loop and blocks until exited
 func (s *Shell) Repl() {
-	p := prompt.New(func(string) {}, s.completer, prompt.OptionPrefix(""))
+	p := prompt.New(
+		func(string) {},
+		s.completer,
+		prompt.OptionPrefix(""),
+		prompt.OptionSuggestionBGColor(prompt.DarkGreen),
+		prompt.OptionSuggestionTextColor(prompt.LightGray),
+		prompt.OptionSelectedSuggestionBGColor(prompt.Green),
+		prompt.OptionDescriptionTextColor(prompt.White),
+		prompt.OptionDescriptionBGColor(prompt.DarkGray),
+		prompt.OptionSelectedDescriptionBGColor(prompt.White),
+		prompt.OptionSelectedDescriptionTextColor(prompt.LightGray),
+	)
 	for {
 		fmt.Print(s.promptText)
 		input, shouldExit := p.InputWithExit()
@@ -121,9 +133,41 @@ func (s *Shell) Exit(statusCode int) {
 	os.Exit(statusCode)
 }
 
-func (s *Shell) executor(cmd string) {
-}
-
 func (s *Shell) completer(d prompt.Document) []prompt.Suggest {
-	return prompt.FilterHasPrefix([]prompt.Suggest{}, d.GetWordBeforeCursor(), true)
+	sug := []prompt.Suggest{}
+	tokens, openQuote := tokenize(d.TextBeforeCursor())
+	if openQuote {
+		return []prompt.Suggest{}
+	}
+
+	curLookup := s.commandLookup
+	for idx, arg := range tokens {
+		prefix := idx == (len(tokens) - 1)
+		if !prefix {
+			cmd, ok := curLookup[arg]
+			if !ok {
+				return sug
+			}
+
+			if cmd.SubCommands == nil || len(cmd.SubCommands) == 0 {
+				return sug
+			}
+
+			curLookup = cmd.subCommandLookup
+		} else {
+			for name, cmd := range curLookup {
+				if strings.HasPrefix(name, arg) {
+					sug = append(sug, prompt.Suggest{
+						Text:        name,
+						Description: cmd.Description,
+					})
+				}
+			}
+		}
+	}
+
+	if len(sug) == 1 && tokens[len(tokens)-1] == sug[0].Text {
+		return []prompt.Suggest{}
+	}
+	return sug
 }

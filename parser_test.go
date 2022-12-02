@@ -4,9 +4,9 @@ import "testing"
 
 func TestTokenizer(t *testing.T) {
 	cmd := "  this  is  \"a test of \" some tokens  "
-	tokens, err := tokenize(cmd)
-	if err != nil {
-		t.Error(err)
+	tokens, openQuote := tokenize(cmd)
+	if openQuote {
+		t.Errorf("Reported open quote when none was present")
 		return
 	}
 
@@ -26,16 +26,16 @@ func TestTokenizer(t *testing.T) {
 
 func TestRunOnQuote(t *testing.T) {
 	cmd := "this is a 'run-on quote without ending"
-	_, err := tokenize(cmd)
-	if err == nil {
+	_, openQuote := tokenize(cmd)
+	if !openQuote {
 		t.Errorf("Expected tokenizer to catch un-terminated quotation mark")
 	}
 }
 
 func TestQuoteMismatch(t *testing.T) {
 	cmd := "this is a 'quote mismatch\""
-	_, err := tokenize(cmd)
-	if err == nil {
+	_, openQuote := tokenize(cmd)
+	if !openQuote {
 		t.Errorf("Expected tokenizer to catch quote mismatch")
 	}
 }

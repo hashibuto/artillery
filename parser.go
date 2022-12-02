@@ -66,9 +66,9 @@ func extractCommand(tokens []any) (string, []any, error) {
 // parse linearly extracts options and arguments from the provided command string
 func parse(cmd string) ([]any, error) {
 	output := []any{}
-	tokens, err := tokenize(cmd)
-	if err != nil {
-		return nil, err
+	tokens, openQuote := tokenize(cmd)
+	if openQuote {
+		return nil, fmt.Errorf("Unterminated quotation mark")
 	}
 
 	for _, token := range tokens {
@@ -121,7 +121,7 @@ func parse(cmd string) ([]any, error) {
 }
 
 // tokenize breaks the command into individual tokens, preserving quoted areas
-func tokenize(cmd string) ([]string, error) {
+func tokenize(cmd string) ([]string, bool) {
 	tokens := []string{}
 	openQuote := false
 	var quoteChar byte
@@ -157,11 +157,7 @@ func tokenize(cmd string) ([]string, error) {
 		tokens = append(tokens, token)
 	}
 
-	if openQuote {
-		return nil, fmt.Errorf("Command contains an unterminated quote")
-	}
-
-	return tokens, nil
+	return tokens, openQuote
 }
 
 // convert converts the provided input value to the specified argument type

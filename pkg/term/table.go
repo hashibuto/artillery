@@ -57,6 +57,6 @@ func (t *Table) Render() {
 			col := row[idx]
 			values[idx] = fmt.Sprintf("%s%s", col, strings.Repeat(" ", t.columnWidths[idx]-len(col)))
 		}
-		Println(Grey, strings.Join(values, strings.Repeat(" ", gutter)), Reset)
+		Println(White, strings.Join(values, strings.Repeat(" ", gutter)), Reset)
 	}
 }
