@@ -12,7 +12,7 @@ func TestReflect(t *testing.T) {
 	ns := Namespace{
 		"name":    "hello",
 		"age":     55,
-		"friends": []string{"donnie", "willy", "barnard"},
+		"friends": []any{"donnie", "willy", "barnard"},
 	}
 	person := &personInput{}
 

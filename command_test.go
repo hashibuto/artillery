@@ -133,3 +133,45 @@ func TestCommandUnrecognizedOption(t *testing.T) {
 		return
 	}
 }
+
+func TestCommandGroupArgs(t *testing.T) {
+	input := "-n brando --age=27 marlon"
+	cmd := Command{
+		Name:        "add",
+		Description: "add a person to the roster",
+		Arguments: []*Argument{
+			{
+				Name:        "name",
+				Description: "person's name",
+			},
+		},
+		Options: []*Option{
+			{
+				Name:        "nickname",
+				Description: "nickname of the person",
+				ShortName:   'n',
+			},
+			{
+				Name:        "age",
+				Description: "age of the person",
+				Type:        Int,
+			},
+		},
+		OnExecute: func(ns Namespace) error {
+			return nil
+		},
+	}
+	cmd.Validate()
+
+	var err error
+	tokens, err := parse(input)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	tokens, err = cmd.CompressTokens(tokens)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}

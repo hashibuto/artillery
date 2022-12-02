@@ -6,7 +6,6 @@ import (
 	"sort"
 
 	"github.com/hashibuto/artillery/pkg/term"
-	"github.com/hashibuto/go-prompt"
 )
 
 type ArgType string
@@ -216,6 +215,12 @@ func (cmd *Command) Execute(tokens []any) error {
 		return subCmd.Execute(tokens)
 	}
 
+	var err error
+	tokens, err = cmd.CompressTokens(tokens)
+	if err != nil {
+		return err
+	}
+
 	// This branch of code is on a terminal command (ie. no further subcommands), so evaluate args
 	opts, args, err := group(tokens)
 	if err != nil {
@@ -279,7 +284,56 @@ func (cmd *Command) Execute(tokens []any) error {
 	return cmd.OnExecute(namespace)
 }
 
-// Suggest returns options which match the filter string
-func (cmd *Command) Suggest(filter string) []prompt.Suggest {
-	return nil
+// CompressTokens compresses any token/value pairs where required into a single *Option.
+func (cmd *Command) CompressTokens(tokens []any) ([]any, error) {
+	shortNameToName := cmd.shortNameToName
+	if shortNameToName == nil {
+		shortNameToName = map[string]string{}
+	}
+
+	compressed := []any{}
+	idx := 0
+	for idx < len(tokens) {
+		token := tokens[idx]
+		switch t := token.(type) {
+		case *OptionInput:
+			name := t.Name
+			var optAny any
+			var ok bool
+			if len(t.Name) == 1 {
+				name, ok = shortNameToName[t.Name]
+				if !ok {
+					return nil, fmt.Errorf("Unknown option %s", t.Name)
+				}
+			}
+
+			optAny, ok = cmd.nameToArgOrOption[name]
+			if !ok {
+				return nil, fmt.Errorf("Unknown option %s", t.Name)
+			}
+
+			switch o := optAny.(type) {
+			case *Option:
+				if o.Value == nil && t.Value == "" {
+					if idx < len(tokens)-1 {
+						switch oo := tokens[idx+1].(type) {
+						case string:
+							t.Value = oo
+							compressed = append(compressed, t)
+							idx += 2
+							continue
+						default:
+							return nil, fmt.Errorf("Option %s requires a companion argument", o.InvocationDisplay())
+						}
+					} else {
+						return nil, fmt.Errorf("Option %s requires a companion argument", o.InvocationDisplay())
+					}
+				}
+			}
+		}
+		compressed = append(compressed, token)
+		idx++
+	}
+
+	return compressed, nil
 }
