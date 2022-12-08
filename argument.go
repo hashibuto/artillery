@@ -1,15 +1,19 @@
 package artillery
 
-import "fmt"
+import (
+	"fmt"
+)
+
+type CompletionFunc func(prefix string) []string
 
 type Argument struct {
 	Name           string
 	Description    string
-	Type           ArgType                      // String is the default argument type
-	Default        any                          // Default value (only valid in the final argument position)
-	MemberOf       []string                     // When value must be a member of a limited collection (strings only)
-	CompletionFunc func(prefix string) []string // Used to autocomplete if set (cannot be used together with MemberOf)
-	IsArray        bool                         // When true, argument becomes an array (must be in the final argument position)
+	Type           ArgType        // String is the default argument type
+	Default        any            // Default value (only valid in the final argument position)
+	MemberOf       []string       // When value must be a member of a limited collection (strings only)
+	CompletionFunc CompletionFunc // Used to dynamically list member values, with a prefix for optimization
+	IsArray        bool           // When true, argument becomes an array (must be in the final argument position)
 }
 
 // Validate ensures the validity of the argument

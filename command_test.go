@@ -19,7 +19,7 @@ func TestCommandMissingArg(t *testing.T) {
 				Description: "subtype of animal",
 			},
 		},
-		OnExecute: func(ns Namespace) error {
+		OnExecute: func(ns Namespace, processor *Processor) error {
 			return nil
 		},
 	}
@@ -29,7 +29,7 @@ func TestCommandMissingArg(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = cmd.Execute(tokens)
+	err = cmd.Execute(tokens, nil)
 	if err == nil {
 		t.Errorf("Should have thrown an error due to insufficient arguments (missing subtype)")
 		return
@@ -48,7 +48,7 @@ func TestCommandExtraArg(t *testing.T) {
 				Description: "type of animal",
 			},
 		},
-		OnExecute: func(ns Namespace) error {
+		OnExecute: func(ns Namespace, processor *Processor) error {
 			return nil
 		},
 	}
@@ -58,7 +58,7 @@ func TestCommandExtraArg(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = cmd.Execute(tokens)
+	err = cmd.Execute(tokens, nil)
 	if err == nil {
 		t.Errorf("Should have thrown an error due to too many arguments")
 		return
@@ -76,7 +76,7 @@ func TestCommandCorrectNumArgs(t *testing.T) {
 				Description: "type of animal",
 			},
 		},
-		OnExecute: func(ns Namespace) error {
+		OnExecute: func(ns Namespace, processor *Processor) error {
 			return nil
 		},
 	}
@@ -86,7 +86,7 @@ func TestCommandCorrectNumArgs(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = cmd.Execute(tokens)
+	err = cmd.Execute(tokens, nil)
 	if err != nil {
 		t.Error(err)
 		return
@@ -117,7 +117,7 @@ func TestCommandUnrecognizedOption(t *testing.T) {
 				Type:        Int,
 			},
 		},
-		OnExecute: func(ns Namespace) error {
+		OnExecute: func(ns Namespace, processor *Processor) error {
 			return nil
 		},
 	}
@@ -127,7 +127,7 @@ func TestCommandUnrecognizedOption(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = cmd.Execute(tokens)
+	err = cmd.Execute(tokens, nil)
 	if err == nil {
 		t.Errorf("Should have errored for unrecognized option")
 		return
@@ -157,11 +157,11 @@ func TestCommandGroupArgs(t *testing.T) {
 				Type:        Int,
 			},
 		},
-		OnExecute: func(ns Namespace) error {
+		OnExecute: func(ns Namespace, processor *Processor) error {
 			return nil
 		},
 	}
-	cmd.Validate()
+	cmd.Prepare()
 
 	var err error
 	tokens, err := parse(input)

@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strings"
 
-	"github.com/hashibuto/artillery/pkg/term"
+	"github.com/hashibuto/artillery/pkg/tg"
+	ns "github.com/hashibuto/nilshell"
 )
 
 type ArgType string
@@ -30,16 +32,38 @@ type Command struct {
 	// Commands which have subcommands cannot have any of the following
 	Options   []*Option
 	Arguments []*Argument
-	OnExecute func(Namespace) error
+	OnExecute func(Namespace, *Processor) error
 
 	// These are computed when they are added to the shell
 	subCommandLookup  map[string]*Command
 	shortNameToName   map[string]string
 	nameToArgOrOption map[string]any
+	isInitialized     bool
 }
 
-// Validate establishes the validity of the command and returns an error on the first violation
-func (cmd *Command) Validate() error {
+// Prepare establishes the validity of the command as well as prepares various optimizations, and returns an
+// error on the first validation violation
+func (cmd *Command) Prepare() error {
+	// Make the data safer, and sort everything so that we only need to do it once
+	if cmd.SubCommands == nil {
+		cmd.SubCommands = []*Command{}
+	}
+	sort.Slice(cmd.SubCommands, func(i, j int) bool {
+		return cmd.SubCommands[i].Name < cmd.SubCommands[j].Name
+	})
+	if cmd.Options == nil {
+		cmd.Options = []*Option{}
+	}
+	sort.Slice(cmd.Options, func(i, j int) bool {
+		return cmd.Options[i].Name < cmd.Options[j].Name
+	})
+	if cmd.Arguments == nil {
+		cmd.Arguments = []*Argument{}
+	}
+	sort.Slice(cmd.Arguments, func(i, j int) bool {
+		return cmd.Arguments[i].Name < cmd.Arguments[j].Name
+	})
+
 	if cmd.Name == "" {
 		return fmt.Errorf("Commmand requires a name")
 	}
@@ -47,7 +71,7 @@ func (cmd *Command) Validate() error {
 		return fmt.Errorf("Command requires a description")
 	}
 
-	if cmd.SubCommands != nil && len(cmd.SubCommands) > 0 {
+	if len(cmd.SubCommands) > 0 {
 		if cmd.OnExecute != nil {
 			return fmt.Errorf("Commands with subcommands cannot declare an OnExecute function")
 		}
@@ -60,7 +84,7 @@ func (cmd *Command) Validate() error {
 
 		cmd.subCommandLookup = map[string]*Command{}
 		for idx, subCommand := range cmd.SubCommands {
-			err := subCommand.Validate()
+			err := subCommand.Prepare()
 			if err != nil {
 				return fmt.Errorf("Error in subcommand at position %d\n%w", idx, err)
 			}
@@ -78,7 +102,7 @@ func (cmd *Command) Validate() error {
 			return fmt.Errorf("OnExecute method is required")
 		}
 
-		if cmd.Options != nil && len(cmd.Options) > 0 {
+		if len(cmd.Options) > 0 {
 			cmd.nameToArgOrOption = nameToArgOrOption
 			cmd.shortNameToName = shortNameToName
 			for idx, opt := range cmd.Options {
@@ -98,7 +122,7 @@ func (cmd *Command) Validate() error {
 			}
 		}
 
-		if cmd.Arguments != nil && len(cmd.Arguments) > 0 {
+		if len(cmd.Arguments) > 0 {
 			cmd.nameToArgOrOption = nameToArgOrOption
 			cmd.shortNameToName = shortNameToName
 			for idx, arg := range cmd.Arguments {
@@ -119,7 +143,7 @@ func (cmd *Command) Validate() error {
 }
 
 func (cmd *Command) DisplayHelp() {
-	term.Print(term.Blue, cmd.Description, term.Reset, "\n\n")
+	tg.Print(tg.Blue, cmd.Description, tg.Reset, "\n\n")
 	fmt.Println("usage:")
 	fmt.Print(cmd.Name)
 	if cmd.SubCommands != nil && len(cmd.SubCommands) > 0 {
@@ -132,7 +156,7 @@ func (cmd *Command) DisplayHelp() {
 			return subCommands[i].Name < subCommands[j].Name
 		})
 		fmt.Println("subcommands:")
-		table := term.NewTable("subcommand", "description")
+		table := tg.NewTable("subcommand", "description")
 		table.HideHeading = true
 		for _, subCommand := range subCommands {
 			table.Append(subCommand.Name, subCommand.Description)
@@ -161,7 +185,7 @@ func (cmd *Command) DisplayHelp() {
 			sort.Slice(args, func(i, j int) bool {
 				return args[i].Name < args[j].Name
 			})
-			table := term.NewTable("", "name", "description")
+			table := tg.NewTable("", "name", "description")
 			table.HideHeading = true
 			for _, arg := range args {
 				table.Append("", arg.Name, arg.Description)
@@ -175,7 +199,7 @@ func (cmd *Command) DisplayHelp() {
 			sort.Slice(options, func(i, j int) bool {
 				return options[i].Name < options[j].Name
 			})
-			table := term.NewTable("", "name", "description")
+			table := tg.NewTable("", "name", "description")
 			table.HideHeading = true
 			for _, opt := range cmd.Options {
 				table.Append("", opt.InvocationDisplay(), opt.Description)
@@ -189,20 +213,16 @@ func (cmd *Command) DisplayHelp() {
 
 // Execute attempts to execute the supplied argument tokens after evaluating the input against the
 // specified rules.
-func (cmd *Command) Execute(tokens []any) error {
+func (cmd *Command) Execute(tokens []any, processor *Processor) error {
 	namespace := Namespace{}
-	if cmd.Arguments != nil {
-		for _, arg := range cmd.Arguments {
-			arg.ApplyDefault(namespace)
-		}
+	for _, arg := range cmd.Arguments {
+		arg.ApplyDefault(namespace)
 	}
-	if cmd.Options != nil {
-		for _, opt := range cmd.Options {
-			opt.ApplyDefault(namespace)
-		}
+	for _, opt := range cmd.Options {
+		opt.ApplyDefault(namespace)
 	}
 
-	if cmd.SubCommands != nil && len(cmd.SubCommands) > 0 {
+	if len(cmd.SubCommands) > 0 {
 		// Attempt to look up a subcommand
 		subCmdStr, tokens, err := extractCommand(tokens)
 		if err != nil {
@@ -212,7 +232,7 @@ func (cmd *Command) Execute(tokens []any) error {
 		if !ok {
 			return fmt.Errorf("%s is not a valid subcommand of %s", subCmdStr, cmd.Name)
 		}
-		return subCmd.Execute(tokens)
+		return subCmd.Execute(tokens, processor)
 	}
 
 	var err error
@@ -281,7 +301,65 @@ func (cmd *Command) Execute(tokens []any) error {
 		}
 	}
 
-	return cmd.OnExecute(namespace)
+	return cmd.OnExecute(namespace, processor)
+}
+
+func (cmd *Command) OnComplete(tokens []any) []*ns.AutoComplete {
+	sug := []*ns.AutoComplete{}
+
+	// We only operate on arguments
+	if len(cmd.Arguments) == 0 {
+		return sug
+	}
+
+	// Is the current input token an arg?
+	isArg := false
+
+	finalToken := tokens[len(tokens)-1]
+	switch finalToken.(type) {
+	case string:
+		isArg = true
+	}
+
+	if !isArg {
+		return sug
+	}
+
+	// if it's an arg, which arg is it
+	count := 0
+	for _, token := range tokens {
+		switch token.(type) {
+		case string:
+			count++
+		}
+	}
+	if count > len(cmd.Arguments) {
+		if !cmd.Arguments[len(cmd.Arguments)-1].IsArray {
+			// Empty
+			return sug
+		}
+		count = len(cmd.Arguments) - 1
+	}
+
+	cmdArg := cmd.Arguments[count-1]
+	if cmdArg.CompletionFunc != nil {
+		results := cmdArg.CompletionFunc(finalToken.(string))
+		for _, result := range results {
+			sug = append(sug, &ns.AutoComplete{
+				Name: result,
+			})
+		}
+	} else if cmdArg.MemberOf != nil {
+		for _, result := range cmdArg.MemberOf {
+			if strings.HasPrefix(result, finalToken.(string)) {
+				sug = append(sug, &ns.AutoComplete{
+					Name: result,
+				})
+			}
+		}
+	}
+
+	return sug
 }
 
 // CompressTokens compresses any token/value pairs where required into a single *Option.

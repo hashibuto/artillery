@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/hashibuto/artillery/pkg/term"
+	"github.com/hashibuto/artillery/pkg/tg"
 )
 
 type helpCommandArgs struct {
@@ -16,15 +16,6 @@ func makeHelpCommand() *Command {
 	return &Command{
 		Name:        "help",
 		Description: "display the command set, and contextual help",
-		Options: []*Option{
-			{
-				ShortName:   'v',
-				Name:        "verbose",
-				Description: "show verbose help",
-				Default:     false,
-				Value:       true,
-			},
-		},
 		Arguments: []*Argument{
 			{
 				Name:        "command",
@@ -32,19 +23,18 @@ func makeHelpCommand() *Command {
 				IsArray:     true,
 			},
 		},
-		OnExecute: func(ns Namespace) error {
+		OnExecute: func(ns Namespace, processor *Processor) error {
 			helpArgs := &helpCommandArgs{}
 			err := Reflect(ns, helpArgs)
 			if err != nil {
 				return err
 			}
-			shell := GetInstance()
 
 			if len(helpArgs.Command) == 0 {
 				fmt.Println()
 				groups := []string{}
 				byGroup := map[string][]*Command{}
-				for _, cmd := range shell.commandLookup {
+				for _, cmd := range processor.commandLookup {
 					_, ok := byGroup[cmd.Group]
 					if !ok {
 						groups = append(groups, cmd.Group)
@@ -68,14 +58,14 @@ func makeHelpCommand() *Command {
 				for _, groupName := range groups {
 					group := byGroup[groupName]
 					if groupName == "" {
-						if shell.defaultHeading == "" {
+						if processor.DefaultHeading == "" {
 							groupName = "commands"
 						} else {
-							groupName = shell.defaultHeading
+							groupName = processor.DefaultHeading
 						}
 					}
-					term.Print(term.Bold, term.Blue, groupName, "\n\n", term.Reset)
-					table := term.NewTable("command", "description")
+					tg.Print(tg.Bold, tg.Blue, groupName, "\n\n", tg.Reset)
+					table := tg.NewTable("command", "description")
 					table.HideHeading = true
 					for _, cmd := range group {
 						table.Append(cmd.Name, cmd.Description)
@@ -86,7 +76,7 @@ func makeHelpCommand() *Command {
 			} else {
 				var curCommand *Command
 				var ok bool
-				curLookup := shell.commandLookup
+				curLookup := processor.commandLookup
 				for _, cmdName := range helpArgs.Command {
 					cmdNameStr := cmdName.(string)
 					curCommand, ok = curLookup[cmdNameStr]

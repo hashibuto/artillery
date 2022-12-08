@@ -65,12 +65,17 @@ func extractCommand(tokens []any) (string, []any, error) {
 
 // parse linearly extracts options and arguments from the provided command string
 func parse(cmd string) ([]any, error) {
-	output := []any{}
 	tokens, openQuote := tokenize(cmd)
 	if openQuote {
 		return nil, fmt.Errorf("Unterminated quotation mark")
 	}
 
+	return categorizeTokens(tokens), nil
+}
+
+// categorizeTokens categorizes parsed tokens into options or arguments
+func categorizeTokens(tokens []string) []any {
+	output := []any{}
 	for _, token := range tokens {
 		matches := optionParser.FindAllStringSubmatch(token, -1)
 		if matches != nil {
@@ -117,7 +122,7 @@ func parse(cmd string) ([]any, error) {
 			output = append(output, token)
 		}
 	}
-	return output, nil
+	return output
 }
 
 // tokenize breaks the command into individual tokens, preserving quoted areas
