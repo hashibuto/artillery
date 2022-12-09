@@ -2,6 +2,8 @@ package artillery
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/hashibuto/artillery/pkg/tg"
@@ -24,6 +26,10 @@ func NewProcessor() *Processor {
 	err := proc.AddCommand(makeHelpCommand())
 	if err != nil {
 		panic(fmt.Sprintf("Problem with the help command\n%v", err))
+	}
+	err = proc.AddCommand(makeClearCommand())
+	if err != nil {
+		panic(fmt.Sprintf("Problem with the clear command\n%v", err))
 	}
 	return proc
 }
@@ -50,6 +56,32 @@ func (p *Processor) AddCommand(cmd *Command) error {
 }
 
 func (p *Processor) OnExecute(nilShell *ns.NilShell, input string) {
+	if len(input) == 0 {
+		return
+	}
+
+	if input[0] == '!' {
+		input = input[1:]
+		tokens, openQuote := tokenize(input)
+		if openQuote {
+			tg.Println(tg.Red, "Unterminated quotation", tg.Reset)
+			return
+		}
+		if len(tokens) == 0 {
+			return
+		}
+		args := []string{}
+		if len(tokens) > 1 {
+			args = append(args, tokens[1:]...)
+		}
+		cmd := exec.Command(tokens[0], args...)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Run()
+		return
+	}
+
 	// Parse input
 	tokens, err := parse(input)
 	if err != nil {
