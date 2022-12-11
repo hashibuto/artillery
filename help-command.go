@@ -3,8 +3,10 @@ package artillery
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/hashibuto/artillery/pkg/tg"
+	ns "github.com/hashibuto/nilshell"
 )
 
 type helpCommandArgs struct {
@@ -21,6 +23,15 @@ func makeHelpCommand() *Command {
 				Name:        "command",
 				Description: "command and subcommand if available",
 				IsArray:     true,
+				CompletionFunc: func(prefix string, processor *Processor) []string {
+					commandNames := []string{}
+					for key := range processor.commandLookup {
+						if strings.HasPrefix(key, prefix) {
+							commandNames = append(commandNames, key)
+						}
+					}
+					return commandNames
+				},
 			},
 		},
 		OnExecute: func(ns Namespace, processor *Processor) error {
@@ -89,6 +100,13 @@ func makeHelpCommand() *Command {
 			}
 
 			return nil
+		},
+		OnCompleteOverride: func(cmd *Command, tokens []any, processor *Processor) []*ns.AutoComplete {
+			// Everything after "help "
+			before := processor.beforeAndCursor[5:]
+			full := processor.full[5:]
+
+			return processor.OnComplete(before, processor.afterCursor, full)
 		},
 	}
 }

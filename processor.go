@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
 	"strings"
 
 	"github.com/hashibuto/artillery/pkg/tg"
@@ -11,10 +12,13 @@ import (
 )
 
 type Processor struct {
-	DefaultHeading     string
-	nilShell           *ns.NilShell
-	commandLookup      map[string]*Command
-	orderedCommandList []*Command
+	DefaultHeading string
+	nilShell       *ns.NilShell
+	commandLookup  map[string]*Command
+
+	beforeAndCursor string
+	afterCursor     string
+	full            string
 }
 
 func NewProcessor() *Processor {
@@ -30,6 +34,10 @@ func NewProcessor() *Processor {
 	err = proc.AddCommand(makeClearCommand())
 	if err != nil {
 		panic(fmt.Sprintf("Problem with the clear command\n%v", err))
+	}
+	err = proc.AddCommand(makeSetCommand())
+	if err != nil {
+		panic(fmt.Sprintf("Problem with the set command\n%v", err))
 	}
 	return proc
 }
@@ -112,6 +120,10 @@ func (p *Processor) OnExecute(nilShell *ns.NilShell, input string) {
 }
 
 func (p *Processor) OnComplete(beforeAndCursor string, afterCursor string, full string) []*ns.AutoComplete {
+	p.beforeAndCursor = beforeAndCursor
+	p.afterCursor = afterCursor
+	p.full = full
+
 	sug := []*ns.AutoComplete{}
 	tokens, openQuote := tokenize(beforeAndCursor)
 	if openQuote {
@@ -147,7 +159,7 @@ func (p *Processor) OnComplete(beforeAndCursor string, afterCursor string, full 
 					return sug
 				}
 
-				return cmd.OnComplete(compressedTokens)
+				return cmd.OnComplete(compressedTokens, p)
 			}
 
 			curLookup = cmd.subCommandLookup
@@ -165,5 +177,9 @@ func (p *Processor) OnComplete(beforeAndCursor string, afterCursor string, full 
 	if len(sug) == 1 && len(tokens) > 0 && tokens[len(tokens)-1] == sug[0].Name {
 		return []*ns.AutoComplete{}
 	}
+
+	sort.Slice(sug, func(i, j int) bool {
+		return sug[i].Name < sug[j].Name
+	})
 	return sug
 }

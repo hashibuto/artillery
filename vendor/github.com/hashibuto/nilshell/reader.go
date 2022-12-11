@@ -3,6 +3,8 @@ package ns
 import (
 	"fmt"
 	"os"
+	"regexp"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"syscall"
@@ -11,6 +13,8 @@ import (
 )
 
 type ProcessingCode int8
+
+var EscapeFinder = regexp.MustCompile("\033\\[[^m]+m")
 
 const (
 	CodeContinue ProcessingCode = iota
@@ -23,7 +27,8 @@ type LineReader struct {
 	lastSearchText  []rune
 	nilShell        *NilShell
 	isReverseSearch bool
-	prompt          []rune
+	prompt          string
+	promptLength    int
 	completer       Completer
 	bufferOffset    int
 	resizeChan      chan os.Signal
@@ -65,10 +70,13 @@ func (lr *LineReader) Read() (string, bool, error) {
 	// Try our best not to leave the terminal in raw mode
 	defer func() {
 		err := recover()
-		if err != nil {
-			fmt.Printf("Caught panic before exiting\n%v", err)
-		}
 		term.Restore(fd, lr.nilShell.preState)
+		if err != nil {
+			fmt.Printf("Caught panic before exiting\n%v\n", err)
+			if lr.nilShell.Debug {
+				fmt.Println(string(debug.Stack()))
+			}
+		}
 		if err != nil {
 			os.Exit(1)
 		}
@@ -81,7 +89,8 @@ func (lr *LineReader) Read() (string, bool, error) {
 	lr.buffer = []rune{}
 	fmt.Printf("%s", lr.nilShell.Prompt)
 
-	lr.prompt = []rune(lr.nilShell.Prompt)
+	lr.promptLength = len([]rune(EscapeFinder.ReplaceAllString(lr.nilShell.Prompt, "")))
+
 	iBuf := make([]byte, 20)
 	for {
 		n, err := os.Stdin.Read(iBuf)
@@ -321,7 +330,7 @@ func (lr *LineReader) renderEraseForward(justOne bool) {
 	if lr.isReverseSearch {
 		totalOffset = len(reverseSearchPrompt) + 4 + len(lr.buffer) + len(lr.lastSearchText)
 	} else {
-		totalOffset = len(lr.prompt) + len(lr.buffer)
+		totalOffset = lr.promptLength + len(lr.buffer)
 	}
 	remainder := lr.winWidth - (totalOffset % lr.winWidth)
 	if remainder > 0 {
@@ -346,7 +355,7 @@ func (lr *LineReader) renderComplete() {
 		lr.setCursorPos()
 	} else {
 		setCursorPos(lr.cursorRow, 1)
-		fmt.Printf("%s", string(lr.prompt))
+		fmt.Printf("%s", lr.nilShell.Prompt)
 		fmt.Printf("%s", string(lr.buffer))
 		lr.renderEraseForward(false)
 		lr.setCursorPos()
@@ -371,7 +380,7 @@ func (lr *LineReader) setCursorPos() {
 	if lr.isReverseSearch {
 		promptOffset = len(reverseSearchPrompt)
 	} else {
-		promptOffset = len(lr.prompt)
+		promptOffset = lr.promptLength
 	}
 	linearCursorPos := promptOffset + lr.bufferOffset
 	curCursorRow := lr.cursorRow + int(linearCursorPos/lr.winWidth)

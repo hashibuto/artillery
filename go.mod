@@ -4,10 +4,10 @@ go 1.19
 
 require (
 	github.com/hashibuto/mirage v0.2.6
-	github.com/hashibuto/nilshell v0.1.4
+	github.com/hashibuto/nilshell v0.1.8
 )
 
 require (
-	golang.org/x/sys v0.2.0 // indirect
-	golang.org/x/term v0.2.0 // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/term v0.3.0 // indirect
 )

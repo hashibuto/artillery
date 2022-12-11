@@ -30,9 +30,10 @@ type Command struct {
 	SubCommands []*Command
 
 	// Commands which have subcommands cannot have any of the following
-	Options   []*Option
-	Arguments []*Argument
-	OnExecute func(Namespace, *Processor) error
+	Options            []*Option
+	Arguments          []*Argument
+	OnExecute          func(Namespace, *Processor) error
+	OnCompleteOverride func(cmd *Command, tokens []any, processor *Processor) []*ns.AutoComplete
 
 	// These are computed when they are added to the shell
 	subCommandLookup  map[string]*Command
@@ -211,6 +212,13 @@ func (cmd *Command) DisplayHelp() {
 	fmt.Println()
 }
 
+// Process processes the supplied cliArgs as though this were a standalone commmand.  This is useful for processing arguments directly from
+// the cli
+func (cmd *Command) Process(cliArgs []string) error {
+	catTokens := categorizeTokens(cliArgs)
+	return cmd.Execute(catTokens, nil)
+}
+
 // Execute attempts to execute the supplied argument tokens after evaluating the input against the
 // specified rules.
 func (cmd *Command) Execute(tokens []any, processor *Processor) error {
@@ -304,7 +312,15 @@ func (cmd *Command) Execute(tokens []any, processor *Processor) error {
 	return cmd.OnExecute(namespace, processor)
 }
 
-func (cmd *Command) OnComplete(tokens []any) []*ns.AutoComplete {
+func (cmd *Command) OnComplete(tokens []any, processor *Processor) []*ns.AutoComplete {
+	if cmd.OnCompleteOverride != nil {
+		return cmd.OnCompleteOverride(cmd, tokens, processor)
+	}
+
+	return cmd.onComplete(tokens, processor)
+}
+
+func (cmd *Command) onComplete(tokens []any, processor *Processor) []*ns.AutoComplete {
 	sug := []*ns.AutoComplete{}
 
 	// We only operate on arguments
@@ -338,12 +354,12 @@ func (cmd *Command) OnComplete(tokens []any) []*ns.AutoComplete {
 			// Empty
 			return sug
 		}
-		count = len(cmd.Arguments) - 1
+		count = len(cmd.Arguments)
 	}
 
 	cmdArg := cmd.Arguments[count-1]
 	if cmdArg.CompletionFunc != nil {
-		results := cmdArg.CompletionFunc(finalToken.(string))
+		results := cmdArg.CompletionFunc(finalToken.(string), processor)
 		for _, result := range results {
 			sug = append(sug, &ns.AutoComplete{
 				Name: result,

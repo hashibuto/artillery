@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-type CompletionFunc func(prefix string) []string
+type CompletionFunc func(prefix string, processor *Processor) []string
 
 type Argument struct {
 	Name           string
