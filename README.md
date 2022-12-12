@@ -107,3 +107,16 @@ cmd := &artillery.Command{
 
     err := cmd.Process(os.Args)
 ```
+
+## Special commands / keystrokes
+- `clear` clears the terminal
+- `!<command>` execs the command ie `!cat /home/user/something` for bash do `!bash -c "cat /home/user/something | grep whatever"`
+- `exit` exits
+- `<ctrl+r>` reverse search
+- `<up>` move up backwards through the command history
+- `<down>` move forwards through the command history
+- `<ctrl+d>` exit
+- `<tab>` autocomplete
+
+## Example
+[Example showcasing most features](https://github.com/hashibuto/artillery/blob/master/example/main.go)

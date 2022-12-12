@@ -75,12 +75,13 @@ func makeAnimalCommand() *artillery.Command {
 				},
 			},
 			{
-				Name:        "adium",
+				Name:        "rm",
 				Description: "remove an animal from the zoo",
 				Arguments: []*artillery.Argument{
 					{
 						Name:        "animal",
 						Description: "type of animal",
+						MemberOf:    animalTypes,
 					},
 				},
 				OnExecute: func(ns artillery.Namespace, processor *artillery.Processor) error {

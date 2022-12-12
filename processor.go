@@ -39,6 +39,10 @@ func NewProcessor() *Processor {
 	if err != nil {
 		panic(fmt.Sprintf("Problem with the set command\n%v", err))
 	}
+	err = proc.AddCommand(makeExitCommand())
+	if err != nil {
+		panic(fmt.Sprintf("Problem with the exit command\n%v", err))
+	}
 	return proc
 }
 
