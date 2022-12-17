@@ -12,9 +12,10 @@ import (
 )
 
 type Processor struct {
-	DefaultHeading string
-	nilShell       *ns.NilShell
-	commandLookup  map[string]*Command
+	DefaultHeading  string
+	DisableBuiltins bool
+	nilShell        *ns.NilShell
+	commandLookup   map[string]*Command
 
 	beforeAndCursor string
 	afterCursor     string
@@ -44,6 +45,15 @@ func NewProcessor() *Processor {
 		panic(fmt.Sprintf("Problem with the exit command\n%v", err))
 	}
 	return proc
+}
+
+// RemoveBuiltins removes all builtin commands including the help command if specified
+func (p *Processor) RemoveBuiltins(removeHelp bool) {
+	newLookup := map[string]*Command{}
+	if !removeHelp {
+		newLookup["help"] = p.commandLookup["help"]
+	}
+	p.commandLookup = newLookup
 }
 
 // Shell returns the underlying NilShell instance
