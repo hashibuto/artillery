@@ -1,7 +1,7 @@
 # github.com/hashibuto/mirage v0.2.6
 ## explicit; go 1.19
 github.com/hashibuto/mirage
-# github.com/hashibuto/nilshell v0.1.8
+# github.com/hashibuto/nilshell v0.1.10
 ## explicit; go 1.19
 github.com/hashibuto/nilshell
 # golang.org/x/sys v0.3.0
