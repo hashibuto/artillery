@@ -67,20 +67,46 @@ func (p *Processor) AddCommand(cmd *Command) error {
 	return nil
 }
 
+// Process processes the supplied cliArgs as though this were a standalone commmand.  This is useful for processing arguments directly from
+// the cli
+func (p *Processor) Process(cliArgs []string) error {
+	finalArgs := []string{}
+	for _, arg := range cliArgs {
+		newArg := arg
+		if strings.Contains(arg, " ") || strings.Contains(arg, "\"") || strings.Contains(arg, "'") {
+			if !strings.Contains(arg, "\"") {
+				newArg = fmt.Sprintf("\"%s\"", arg)
+			} else {
+				newArg = fmt.Sprintf("'%s'", arg)
+			}
+		}
+		finalArgs = append(finalArgs, newArg)
+	}
+
+	input := strings.Join(finalArgs, " ")
+	return p.onExecute(nil, input, true)
+}
+
 func (p *Processor) OnExecute(nilShell *ns.NilShell, input string) {
+	p.onExecute(nilShell, input, false)
+}
+
+func (p *Processor) onExecute(nilShell *ns.NilShell, input string, silent bool) error {
 	if len(input) == 0 {
-		return
+		return fmt.Errorf("No input supplied")
 	}
 
 	if input[0] == '!' {
 		input = input[1:]
 		tokens, openQuote := tokenize(input)
 		if openQuote {
-			tg.Println(tg.Red, "Unterminated quotation", tg.Reset)
-			return
+			if !silent {
+				tg.Println(tg.Red, "Unterminated quotation", tg.Reset)
+			}
+			return fmt.Errorf("Unterminated quotation")
 		}
 		if len(tokens) == 0 {
-			return
+			return fmt.Errorf("No input supplied")
 		}
 		args := []string{}
 		if len(tokens) > 1 {
@@ -90,37 +116,45 @@ func (p *Processor) OnExecute(nilShell *ns.NilShell, input string) {
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		cmd.Run()
-		return
+		return cmd.Run()
 	}
 
 	// Parse input
 	tokens, err := parse(input)
 	if err != nil {
-		tg.Println(tg.Red, err, tg.Reset)
-		return
+		if !silent {
+			tg.Println(tg.Red, err, tg.Reset)
+		}
+		return err
 	}
 
 	if len(tokens) == 0 {
-		return
+		return fmt.Errorf("No input supplied")
 	}
 
 	cmdStr, tokens, err := extractCommand(tokens)
 	if err != nil {
-		tg.Println(tg.Red, err, tg.Reset)
-		return
+		if !silent {
+			tg.Println(tg.Red, err, tg.Reset)
+		}
+		return err
 	}
 
 	cmd, ok := p.commandLookup[cmdStr]
 	if !ok {
-		tg.Println(tg.Red, "Command \"", cmdStr, "\" not found", tg.Reset)
-		return
+		if !silent {
+			tg.Println(tg.Red, "Command \"", cmdStr, "\" not found", tg.Reset)
+		}
+		return fmt.Errorf("Command \"%s\" not found", cmdStr)
 	}
 	err = cmd.Execute(tokens, p)
 	if err != nil {
-		tg.Println(tg.Red, err, tg.Reset)
-		return
+		if !silent {
+			tg.Println(tg.Red, err, tg.Reset)
+		}
+		return err
 	}
+	return nil
 }
 
 func (p *Processor) OnComplete(beforeAndCursor string, afterCursor string, full string) []*ns.AutoComplete {
