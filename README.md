@@ -57,8 +57,7 @@ import (
 		}
 	}
 
-	shell := processor.Shell()
-	shell.ReadUntilTerm()
+	processor.Shell().ReadUntilTerm()
 ```
 
 ## Parse a single CLI command (non-interactive)
