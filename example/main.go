@@ -157,7 +157,7 @@ func main() {
 	}
 
 	shell := processor.Shell()
-	shell.Prompt = "\033[33martillery \033[34m\033[1m$ \033[0m"
+	//shell.Prompt = "\033[33martillery \033[34m\033[1m$ \033[0m"
 	shell.AutoCompleteSuggestStyle = "\033[32m"
 	shell.ReadUntilTerm()
 }
