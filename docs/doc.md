@@ -18,7 +18,8 @@ import "github.com/hashibuto/artillery"
 - [type Command](<#type-command>)
   - [func (cmd *Command) CompressTokens(tokens []any) ([]any, error)](<#func-command-compresstokens>)
   - [func (cmd *Command) DisplayHelp()](<#func-command-displayhelp>)
-  - [func (cmd *Command) Execute(tokens []any, processor *Processor) error](<#func-command-execute>)
+  - [func (cmd *Command) Execute(tokens []any, processor *Processor, fromShell bool) error](<#func-command-execute>)
+  - [func (cmd *Command) Fullname() string](<#func-command-fullname>)
   - [func (cmd *Command) OnComplete(tokens []any, processor *Processor) []*ns.AutoComplete](<#func-command-oncomplete>)
   - [func (cmd *Command) Prepare() error](<#func-command-prepare>)
   - [func (cmd *Command) Process(cliArgs []string) error](<#func-command-process>)
@@ -35,8 +36,11 @@ import "github.com/hashibuto/artillery"
 - [type Processor](<#type-processor>)
   - [func NewProcessor() *Processor](<#func-newprocessor>)
   - [func (p *Processor) AddCommand(cmd *Command) error](<#func-processor-addcommand>)
+  - [func (p *Processor) AddCommands(cmds ...*Command) error](<#func-processor-addcommands>)
   - [func (p *Processor) OnComplete(beforeAndCursor string, afterCursor string, full string) []*ns.AutoComplete](<#func-processor-oncomplete>)
   - [func (p *Processor) OnExecute(nilShell *ns.NilShell, input string)](<#func-processor-onexecute>)
+  - [func (p *Processor) Process(cliArgs []string) error](<#func-processor-process>)
+  - [func (p *Processor) RemoveBuiltins(removeHelp bool)](<#func-processor-removebuiltins>)
   - [func (p *Processor) Shell() *ns.NilShell](<#func-processor-shell>)
 
 
@@ -48,7 +52,7 @@ func Reflect(namespace Namespace, obj any) error
 
 Reflect attempts to reflect the data in namespace to the provided object
 
-## type [ArgType](<https://github.com/hashibuto/artillery/blob/master/command.go#L13>)
+## type [ArgType](<https://github.com/hashibuto/artillery/blob/master/command.go#L15>)
 
 ```go
 type ArgType string
@@ -109,7 +113,7 @@ func (arg *Argument) Validate(isLast bool) error
 
 Validate ensures the validity of the argument
 
-## type [Command](<https://github.com/hashibuto/artillery/blob/master/command.go#L26-L43>)
+## type [Command](<https://github.com/hashibuto/artillery/blob/master/command.go#L28-L46>)
 
 ```go
 type Command struct {
@@ -127,7 +131,7 @@ type Command struct {
 }
 ```
 
-### func \(\*Command\) [CompressTokens](<https://github.com/hashibuto/artillery/blob/master/command.go#L382>)
+### func \(\*Command\) [CompressTokens](<https://github.com/hashibuto/artillery/blob/master/command.go#L399>)
 
 ```go
 func (cmd *Command) CompressTokens(tokens []any) ([]any, error)
@@ -135,27 +139,37 @@ func (cmd *Command) CompressTokens(tokens []any) ([]any, error)
 
 CompressTokens compresses any token/value pairs where required into a single \*Option.
 
-### func \(\*Command\) [DisplayHelp](<https://github.com/hashibuto/artillery/blob/master/command.go#L146>)
+### func \(\*Command\) [DisplayHelp](<https://github.com/hashibuto/artillery/blob/master/command.go#L163>)
 
 ```go
 func (cmd *Command) DisplayHelp()
 ```
 
-### func \(\*Command\) [Execute](<https://github.com/hashibuto/artillery/blob/master/command.go#L224>)
+DisplayHelp displays contextual help for the command
+
+### func \(\*Command\) [Execute](<https://github.com/hashibuto/artillery/blob/master/command.go#L241>)
 
 ```go
-func (cmd *Command) Execute(tokens []any, processor *Processor) error
+func (cmd *Command) Execute(tokens []any, processor *Processor, fromShell bool) error
 ```
 
 Execute attempts to execute the supplied argument tokens after evaluating the input against the specified rules.
 
-### func \(\*Command\) [OnComplete](<https://github.com/hashibuto/artillery/blob/master/command.go#L315>)
+### func \(\*Command\) [Fullname](<https://github.com/hashibuto/artillery/blob/master/command.go#L151>)
+
+```go
+func (cmd *Command) Fullname() string
+```
+
+Fullname returns the command include the parent command
+
+### func \(\*Command\) [OnComplete](<https://github.com/hashibuto/artillery/blob/master/command.go#L332>)
 
 ```go
 func (cmd *Command) OnComplete(tokens []any, processor *Processor) []*ns.AutoComplete
 ```
 
-### func \(\*Command\) [Prepare](<https://github.com/hashibuto/artillery/blob/master/command.go#L47>)
+### func \(\*Command\) [Prepare](<https://github.com/hashibuto/artillery/blob/master/command.go#L50>)
 
 ```go
 func (cmd *Command) Prepare() error
@@ -163,7 +177,7 @@ func (cmd *Command) Prepare() error
 
 Prepare establishes the validity of the command as well as prepares various optimizations, and returns an error on the first validation violation
 
-### func \(\*Command\) [Process](<https://github.com/hashibuto/artillery/blob/master/command.go#L217>)
+### func \(\*Command\) [Process](<https://github.com/hashibuto/artillery/blob/master/command.go#L234>)
 
 ```go
 func (cmd *Command) Process(cliArgs []string) error
@@ -177,7 +191,7 @@ Process processes the supplied cliArgs as though this were a standalone commmand
 type CompletionFunc func(prefix string, processor *Processor) []string
 ```
 
-## type [Namespace](<https://github.com/hashibuto/artillery/blob/master/command.go#L24>)
+## type [Namespace](<https://github.com/hashibuto/artillery/blob/master/command.go#L26>)
 
 ```go
 type Namespace map[string]any
@@ -254,22 +268,23 @@ type OptionInput struct {
 }
 ```
 
-## type [Processor](<https://github.com/hashibuto/artillery/blob/master/processor.go#L14-L22>)
+## type [Processor](<https://github.com/hashibuto/artillery/blob/master/processor.go#L15-L24>)
 
 ```go
 type Processor struct {
-    DefaultHeading string
+    DefaultHeading  string
+    DisableBuiltins bool
     // contains filtered or unexported fields
 }
 ```
 
-### func [NewProcessor](<https://github.com/hashibuto/artillery/blob/master/processor.go#L24>)
+### func [NewProcessor](<https://github.com/hashibuto/artillery/blob/master/processor.go#L26>)
 
 ```go
 func NewProcessor() *Processor
 ```
 
-### func \(\*Processor\) [AddCommand](<https://github.com/hashibuto/artillery/blob/master/processor.go#L55>)
+### func \(\*Processor\) [AddCommand](<https://github.com/hashibuto/artillery/blob/master/processor.go#L78>)
 
 ```go
 func (p *Processor) AddCommand(cmd *Command) error
@@ -277,19 +292,43 @@ func (p *Processor) AddCommand(cmd *Command) error
 
 AddCommand adds a command to the processor.  If the command is in some way invalid, an error will be returned here.
 
-### func \(\*Processor\) [OnComplete](<https://github.com/hashibuto/artillery/blob/master/processor.go#L126>)
+### func \(\*Processor\) [AddCommands](<https://github.com/hashibuto/artillery/blob/master/processor.go#L66>)
+
+```go
+func (p *Processor) AddCommands(cmds ...*Command) error
+```
+
+AddCommands adds several commands to the processor at once
+
+### func \(\*Processor\) [OnComplete](<https://github.com/hashibuto/artillery/blob/master/processor.go#L190>)
 
 ```go
 func (p *Processor) OnComplete(beforeAndCursor string, afterCursor string, full string) []*ns.AutoComplete
 ```
 
-### func \(\*Processor\) [OnExecute](<https://github.com/hashibuto/artillery/blob/master/processor.go#L70>)
+### func \(\*Processor\) [OnExecute](<https://github.com/hashibuto/artillery/blob/master/processor.go#L113>)
 
 ```go
 func (p *Processor) OnExecute(nilShell *ns.NilShell, input string)
 ```
 
-### func \(\*Processor\) [Shell](<https://github.com/hashibuto/artillery/blob/master/processor.go#L50>)
+### func \(\*Processor\) [Process](<https://github.com/hashibuto/artillery/blob/master/processor.go#L95>)
+
+```go
+func (p *Processor) Process(cliArgs []string) error
+```
+
+Process processes the supplied cliArgs as though this were a standalone commmand.  This is useful for processing arguments directly from the cli
+
+### func \(\*Processor\) [RemoveBuiltins](<https://github.com/hashibuto/artillery/blob/master/processor.go#L52>)
+
+```go
+func (p *Processor) RemoveBuiltins(removeHelp bool)
+```
+
+RemoveBuiltins removes all builtin commands including the help command if specified
+
+### func \(\*Processor\) [Shell](<https://github.com/hashibuto/artillery/blob/master/processor.go#L61>)
 
 ```go
 func (p *Processor) Shell() *ns.NilShell

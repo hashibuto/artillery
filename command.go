@@ -2,6 +2,8 @@ package artillery
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -40,6 +42,7 @@ type Command struct {
 	shortNameToName   map[string]string
 	nameToArgOrOption map[string]any
 	isInitialized     bool
+	parentCommand     *Command
 }
 
 // Prepare establishes the validity of the command as well as prepares various optimizations, and returns an
@@ -85,6 +88,7 @@ func (cmd *Command) Prepare() error {
 
 		cmd.subCommandLookup = map[string]*Command{}
 		for idx, subCommand := range cmd.SubCommands {
+			subCommand.parentCommand = cmd
 			err := subCommand.Prepare()
 			if err != nil {
 				return fmt.Errorf("Error in subcommand at position %d\n%w", idx, err)
@@ -143,6 +147,19 @@ func (cmd *Command) Prepare() error {
 	return nil
 }
 
+// Fullname returns the command include the parent command
+func (cmd *Command) Fullname() string {
+	names := []string{}
+	curCmd := cmd
+	for curCmd != nil {
+		names = append([]string{curCmd.Name}, names...)
+		curCmd = curCmd.parentCommand
+	}
+
+	return strings.Join(names, " ")
+}
+
+// DisplayHelp displays contextual help for the command
 func (cmd *Command) DisplayHelp() {
 	tg.Print(tg.Blue, cmd.Description, tg.Reset, "\n\n")
 	fmt.Println("usage:")
@@ -216,12 +233,12 @@ func (cmd *Command) DisplayHelp() {
 // the cli
 func (cmd *Command) Process(cliArgs []string) error {
 	catTokens := categorizeTokens(cliArgs)
-	return cmd.Execute(catTokens, nil)
+	return cmd.Execute(catTokens, nil, false)
 }
 
 // Execute attempts to execute the supplied argument tokens after evaluating the input against the
 // specified rules.
-func (cmd *Command) Execute(tokens []any, processor *Processor) error {
+func (cmd *Command) Execute(tokens []any, processor *Processor, fromShell bool) error {
 	namespace := Namespace{}
 	for _, arg := range cmd.Arguments {
 		arg.ApplyDefault(namespace)
@@ -240,7 +257,7 @@ func (cmd *Command) Execute(tokens []any, processor *Processor) error {
 		if !ok {
 			return fmt.Errorf("%s is not a valid subcommand of %s", subCmdStr, cmd.Name)
 		}
-		return subCmd.Execute(tokens, processor)
+		return subCmd.Execute(tokens, processor, fromShell)
 	}
 
 	var err error
@@ -261,7 +278,7 @@ func (cmd *Command) Execute(tokens []any, processor *Processor) error {
 		if len(opt.Name) == 1 {
 			optName, ok = cmd.shortNameToName[opt.Name]
 			if !ok {
-				return fmt.Errorf("Option -%s is not recognized", opt.Name)
+				return fmt.Errorf("Option -%s is not recognized.  %s", opt.Name, cmd.helpInvocationStr(fromShell))
 			}
 		} else {
 			optName = opt.Name
@@ -269,7 +286,7 @@ func (cmd *Command) Execute(tokens []any, processor *Processor) error {
 
 		optDef, ok := cmd.nameToArgOrOption[optName]
 		if !ok {
-			return fmt.Errorf("Option --%s is not recognized", optName)
+			return fmt.Errorf("Option --%s is not recognized.  %s", optName, cmd.helpInvocationStr(fromShell))
 		}
 
 		switch t := optDef.(type) {
@@ -279,24 +296,24 @@ func (cmd *Command) Execute(tokens []any, processor *Processor) error {
 				return err
 			}
 		default:
-			return fmt.Errorf("Option --%s is not recognized", optName)
+			return fmt.Errorf("Option --%s is not recognized.  %s", optName, cmd.helpInvocationStr(fromShell))
 		}
 	}
 
 	for idx, arg := range args {
-		if cmd.Arguments != nil {
+		if len(cmd.Arguments) > 0 {
 			ix := idx
 			if ix >= len(cmd.Arguments) {
 				ix = len(cmd.Arguments) - 1
 				if !cmd.Arguments[ix].IsArray {
-					return fmt.Errorf("Unexpected argument \"%s\"", arg)
+					return fmt.Errorf("Unexpected argument \"%s\".  %s", arg, cmd.helpInvocationStr(fromShell))
 				}
 			}
 
 			argDef := cmd.Arguments[ix]
 			argDef.Apply(arg, namespace)
 		} else {
-			return fmt.Errorf("Unexpected argument \"%s\"", arg)
+			return fmt.Errorf("Unexpected argument \"%s\".  %s", arg, cmd.helpInvocationStr(fromShell))
 		}
 	}
 
@@ -304,7 +321,7 @@ func (cmd *Command) Execute(tokens []any, processor *Processor) error {
 		for _, arg := range cmd.Arguments {
 			v := namespace[arg.Name]
 			if v == nil {
-				return fmt.Errorf("Expected argument \"%s\"", arg.Name)
+				return fmt.Errorf("Expected argument \"%s\".  %s", arg.Name, cmd.helpInvocationStr(fromShell))
 			}
 		}
 	}
@@ -430,4 +447,15 @@ func (cmd *Command) CompressTokens(tokens []any) ([]any, error) {
 	}
 
 	return compressed, nil
+}
+
+func (cmd *Command) helpInvocationStr(fromShell bool) string {
+	if fromShell {
+		return fmt.Sprintf("Type \"help %s\" for usage.", cmd.Fullname())
+	}
+
+	bin := os.Args[0]
+	_, fname := filepath.Split(bin)
+
+	return fmt.Sprintf("Type \"%s help %s\" for usage.", fname, cmd.Fullname())
 }

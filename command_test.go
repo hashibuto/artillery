@@ -29,7 +29,7 @@ func TestCommandMissingArg(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = cmd.Execute(tokens, nil)
+	err = cmd.Execute(tokens, nil, false)
 	if err == nil {
 		t.Errorf("Should have thrown an error due to insufficient arguments (missing subtype)")
 		return
@@ -58,7 +58,7 @@ func TestCommandExtraArg(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = cmd.Execute(tokens, nil)
+	err = cmd.Execute(tokens, nil, false)
 	if err == nil {
 		t.Errorf("Should have thrown an error due to too many arguments")
 		return
@@ -86,7 +86,7 @@ func TestCommandCorrectNumArgs(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = cmd.Execute(tokens, nil)
+	err = cmd.Execute(tokens, nil, false)
 	if err != nil {
 		t.Error(err)
 		return
@@ -127,7 +127,7 @@ func TestCommandUnrecognizedOption(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = cmd.Execute(tokens, nil)
+	err = cmd.Execute(tokens, nil, false)
 	if err == nil {
 		t.Errorf("Should have errored for unrecognized option")
 		return

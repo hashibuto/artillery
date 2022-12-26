@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -61,6 +62,18 @@ func (p *Processor) Shell() *ns.NilShell {
 	return p.nilShell
 }
 
+// AddCommands adds several commands to the processor at once
+func (p *Processor) AddCommands(cmds ...*Command) error {
+	for _, c := range cmds {
+		err := p.AddCommand(c)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // AddCommand adds a command to the processor.  If the command is in some way invalid, an error will be returned here.
 func (p *Processor) AddCommand(cmd *Command) error {
 	err := cmd.Prepare()
@@ -116,7 +129,14 @@ func (p *Processor) onExecute(nilShell *ns.NilShell, input string, silent bool) 
 			return fmt.Errorf("Unterminated quotation")
 		}
 		if len(tokens) == 0 {
-			return fmt.Errorf("No input supplied")
+			var helpStr string
+			if nilShell == nil {
+				bin := os.Args[0]
+				_, fname := filepath.Split(bin)
+				helpStr = fmt.Sprintf("  Type \"%s help\" for usage.", fname)
+			}
+
+			return fmt.Errorf("No input supplied.%s", helpStr)
 		}
 		args := []string{}
 		if len(tokens) > 1 {
@@ -157,7 +177,7 @@ func (p *Processor) onExecute(nilShell *ns.NilShell, input string, silent bool) 
 		}
 		return fmt.Errorf("Command \"%s\" not found", cmdStr)
 	}
-	err = cmd.Execute(tokens, p)
+	err = cmd.Execute(tokens, p, nilShell != nil)
 	if err != nil {
 		if !silent {
 			tg.Println(tg.Red, err, tg.Reset)

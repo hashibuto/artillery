@@ -68,43 +68,50 @@ import (
     "os"
 )
 
-cmd := &artillery.Command{
-        Name:        "hello",
-        Description: "prints hello to the console",
-        Arguments: []*artillery.Argument{
-            {
-                Name:        "name",
-                Description: "name of the person to which to say hello",
-            },
+helloCmd := &artillery.Command{
+    Name:        "hello",
+    Description: "prints hello to the console",
+    Arguments: []*artillery.Argument{
+        {
+            Name:        "name",
+            Description: "name of the person to which to say hello",
         },
-        Options: []*artillery.Option{
-            {
-                Name:        "shout",
-                Description: "shout mode",
-                ShortName:   's',
-                Type:        artillary.Bool
-                Value:       true,
-            },
+    },
+    Options: []*artillery.Option{
+        {
+            Name:        "shout",
+            Description: "shout mode",
+            ShortName:   's',
+            Type:        artillary.Bool
+            Value:       true,
         },
-        OnExecute: func(ns artillery.Namespace, processor *artillery.Processor) error {
-            var args struct {
-                Name  string
-                Shout bool
-            }
-            err := artillery.Reflect(ns, &args)
-            if err != nil {
-                return err
-            }
+    },
+    OnExecute: func(ns artillery.Namespace, processor *artillery.Processor) error {
+        var args struct {
+            Name  string
+            Shout bool
+        }
+        err := artillery.Reflect(ns, &args)
+        if err != nil {
+            return err
+        }
 
-            message := fmt.Sprintf("hello %s!", args.Name)
-            if args.Shout {
-                message = strings.ToUpper(message)
-            }
-            return nil
-        },            
-    }
+        message := fmt.Sprintf("hello %s!", args.Name)
+        if args.Shout {
+            message = strings.ToUpper(message)
+        }
+        return nil
+    },            
+}
 
-    err := cmd.Process(os.Args)
+processor := artillery.NewProcessor()
+processor.RemoveBuiltins(false)
+err := processor.AddCommands(helloCmd)
+if err != nil {
+    panic(err)
+}
+
+err = processor.Process(os.Args)
 ```
 
 ## Special commands / keystrokes
