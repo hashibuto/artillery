@@ -115,8 +115,15 @@ func (p *Processor) OnExecute(nilShell *ns.NilShell, input string) {
 }
 
 func (p *Processor) onExecute(nilShell *ns.NilShell, input string, silent bool) error {
+	var helpStr string
+	if nilShell == nil {
+		bin := os.Args[0]
+		_, fname := filepath.Split(bin)
+		helpStr = fmt.Sprintf("  Type \"%s help\" for usage.", fname)
+	}
+
 	if len(input) == 0 {
-		return fmt.Errorf("No input supplied")
+		return fmt.Errorf("No input supplied.%s", helpStr)
 	}
 
 	if input[0] == '!' {
@@ -129,13 +136,6 @@ func (p *Processor) onExecute(nilShell *ns.NilShell, input string, silent bool) 
 			return fmt.Errorf("Unterminated quotation")
 		}
 		if len(tokens) == 0 {
-			var helpStr string
-			if nilShell == nil {
-				bin := os.Args[0]
-				_, fname := filepath.Split(bin)
-				helpStr = fmt.Sprintf("  Type \"%s help\" for usage.", fname)
-			}
-
 			return fmt.Errorf("No input supplied.%s", helpStr)
 		}
 		args := []string{}
@@ -159,7 +159,7 @@ func (p *Processor) onExecute(nilShell *ns.NilShell, input string, silent bool) 
 	}
 
 	if len(tokens) == 0 {
-		return fmt.Errorf("No input supplied")
+		return fmt.Errorf("No input supplied.%s", helpStr)
 	}
 
 	cmdStr, tokens, err := extractCommand(tokens)
@@ -173,9 +173,9 @@ func (p *Processor) onExecute(nilShell *ns.NilShell, input string, silent bool) 
 	cmd, ok := p.commandLookup[cmdStr]
 	if !ok {
 		if !silent {
-			tg.Println(tg.Red, "Command \"", cmdStr, "\" not found", tg.Reset)
+			tg.Println(tg.Red, "Command \"", cmdStr, "\" not found.", tg.Reset, helpStr)
 		}
-		return fmt.Errorf("Command \"%s\" not found", cmdStr)
+		return fmt.Errorf("Command \"%s\" not found.%s", cmdStr, helpStr)
 	}
 	err = cmd.Execute(tokens, p, nilShell != nil)
 	if err != nil {
