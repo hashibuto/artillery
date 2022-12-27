@@ -165,7 +165,7 @@ func (p *Processor) onExecute(nilShell *ns.NilShell, input string, silent bool) 
 	cmdStr, tokens, err := extractCommand(tokens)
 	if err != nil {
 		if !silent {
-			tg.Println(tg.Red, err, tg.Reset, helpStr)
+			tg.Println(tg.Red, err, helpStr, tg.Reset)
 		}
 		return err
 	}
@@ -180,7 +180,7 @@ func (p *Processor) onExecute(nilShell *ns.NilShell, input string, silent bool) 
 	err = cmd.Execute(tokens, p, nilShell != nil)
 	if err != nil {
 		if !silent {
-			tg.Println(tg.Red, err, tg.Reset)
+			tg.Println(tg.Red, err, helpStr, tg.Reset)
 		}
 		return err
 	}
