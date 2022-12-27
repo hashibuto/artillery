@@ -255,7 +255,7 @@ func (cmd *Command) Execute(tokens []any, processor *Processor, fromShell bool) 
 		}
 		subCmd, ok := cmd.subCommandLookup[subCmdStr]
 		if !ok {
-			return fmt.Errorf("%s is not a valid subcommand of %s", subCmdStr, cmd.Name)
+			return fmt.Errorf("%s is not a valid subcommand of %s.  %s", subCmdStr, cmd.Name, cmd.helpInvocationStr(fromShell))
 		}
 		return subCmd.Execute(tokens, processor, fromShell)
 	}
