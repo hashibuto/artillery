@@ -1,17 +1,5 @@
 github.com/hashibuto/mirage v0.2.6 h1:pOWLoOsikTE4Fg23K85hVn9YTV8U3us2k8j/PYMnCF8=
 github.com/hashibuto/mirage v0.2.6/go.mod h1:OrNCJWauUKM2U3/yu1Qt0KlVOn3uKQwsTIwq+xIpFEI=
-github.com/hashibuto/nilshell v0.1.5 h1:P0Iq1plo3RllSDz7/1qbHGDfRpBQQB2ZVGRqkgn0078=
-github.com/hashibuto/nilshell v0.1.5/go.mod h1:OyliDOagrtUHz7DnJ40++YL/oJHI/m0TUOenZWKd5oA=
-github.com/hashibuto/nilshell v0.1.6 h1:2ZNCbR/PqBe5nft6T8CfvFRRfh6vfSXQ15UxDmML1qQ=
-github.com/hashibuto/nilshell v0.1.6/go.mod h1:OyliDOagrtUHz7DnJ40++YL/oJHI/m0TUOenZWKd5oA=
-github.com/hashibuto/nilshell v0.1.8 h1:INBSwrYY8FO7H38u8bE1JFanNDEp66L9sO+Ry8d95Eg=
-github.com/hashibuto/nilshell v0.1.8/go.mod h1:OyliDOagrtUHz7DnJ40++YL/oJHI/m0TUOenZWKd5oA=
-github.com/hashibuto/nilshell v0.1.10 h1:+Rl3tZZOlTpqe4XiM5YN9vBDMgtM+imTOqoQaaPlnBM=
-github.com/hashibuto/nilshell v0.1.10/go.mod h1:OyliDOagrtUHz7DnJ40++YL/oJHI/m0TUOenZWKd5oA=
-github.com/hashibuto/nilshell v0.1.11 h1:ViMpvyLWv0AkBsmgWKXeS8SRo4y21+PjgAchaUBStbI=
-github.com/hashibuto/nilshell v0.1.11/go.mod h1:OyliDOagrtUHz7DnJ40++YL/oJHI/m0TUOenZWKd5oA=
-github.com/hashibuto/nilshell v0.1.12 h1:bVyHGsUjfg1hD1SHnMIPDXkrn1uEQjhr8aS2QNclILo=
-github.com/hashibuto/nilshell v0.1.12/go.mod h1:OyliDOagrtUHz7DnJ40++YL/oJHI/m0TUOenZWKd5oA=
 github.com/hashibuto/nilshell v0.1.13 h1:qswhgXo0Uggn3O0C6CwFrLqMWVZDu+eNyUo/q2VjiWU=
 github.com/hashibuto/nilshell v0.1.13/go.mod h1:OyliDOagrtUHz7DnJ40++YL/oJHI/m0TUOenZWKd5oA=
 golang.org/x/sys v0.3.0 h1:w8ZOecv6NaNa/zC8944JTU3vz4u6Lagfk4RPQxv92NQ=
