@@ -2,6 +2,8 @@ github.com/hashibuto/mirage v0.2.6 h1:pOWLoOsikTE4Fg23K85hVn9YTV8U3us2k8j/PYMnCF
 github.com/hashibuto/mirage v0.2.6/go.mod h1:OrNCJWauUKM2U3/yu1Qt0KlVOn3uKQwsTIwq+xIpFEI=
 github.com/hashibuto/nilshell v0.1.13 h1:qswhgXo0Uggn3O0C6CwFrLqMWVZDu+eNyUo/q2VjiWU=
 github.com/hashibuto/nilshell v0.1.13/go.mod h1:OyliDOagrtUHz7DnJ40++YL/oJHI/m0TUOenZWKd5oA=
+github.com/hashibuto/nilshell v0.1.14 h1:mCHH9yGQ5rUjExQ05Z21uRfncArxr+mFPvxGMAoo6WM=
+github.com/hashibuto/nilshell v0.1.14/go.mod h1:OyliDOagrtUHz7DnJ40++YL/oJHI/m0TUOenZWKd5oA=
 golang.org/x/sys v0.3.0 h1:w8ZOecv6NaNa/zC8944JTU3vz4u6Lagfk4RPQxv92NQ=
 golang.org/x/sys v0.3.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.3.0 h1:qoo4akIqOcDME5bhc/NgxUdovd6BSS2uMsVjB56q1xI=
