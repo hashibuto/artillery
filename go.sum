@@ -12,6 +12,8 @@ github.com/hashibuto/nilshell v0.1.11 h1:ViMpvyLWv0AkBsmgWKXeS8SRo4y21+PjgAchaUB
 github.com/hashibuto/nilshell v0.1.11/go.mod h1:OyliDOagrtUHz7DnJ40++YL/oJHI/m0TUOenZWKd5oA=
 github.com/hashibuto/nilshell v0.1.12 h1:bVyHGsUjfg1hD1SHnMIPDXkrn1uEQjhr8aS2QNclILo=
 github.com/hashibuto/nilshell v0.1.12/go.mod h1:OyliDOagrtUHz7DnJ40++YL/oJHI/m0TUOenZWKd5oA=
+github.com/hashibuto/nilshell v0.1.13 h1:qswhgXo0Uggn3O0C6CwFrLqMWVZDu+eNyUo/q2VjiWU=
+github.com/hashibuto/nilshell v0.1.13/go.mod h1:OyliDOagrtUHz7DnJ40++YL/oJHI/m0TUOenZWKd5oA=
 golang.org/x/sys v0.3.0 h1:w8ZOecv6NaNa/zC8944JTU3vz4u6Lagfk4RPQxv92NQ=
 golang.org/x/sys v0.3.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.3.0 h1:qoo4akIqOcDME5bhc/NgxUdovd6BSS2uMsVjB56q1xI=
