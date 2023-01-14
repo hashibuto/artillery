@@ -7,6 +7,8 @@ import (
 	"github.com/hashibuto/artillery/pkg/tg"
 )
 
+var Debug bool = false
+
 func makeSetCommand() *Command {
 	return &Command{
 		Name:        "set",
@@ -37,9 +39,11 @@ func makeSetCommand() *Command {
 				lower := strings.ToLower(args.Value)
 				if lower == "true" {
 					processor.nilShell.Debug = true
+					Debug = true
 					fmt.Println("debug mode on")
 				} else if lower == "false" {
 					processor.nilShell.Debug = false
+					Debug = false
 					fmt.Println("debug mode off")
 				} else {
 					tg.Println(tg.Red, "Debug setting must be true/false", tg.Reset)
