@@ -326,6 +326,17 @@ func (cmd *Command) Execute(tokens []any, processor *Processor, fromShell bool) 
 		}
 	}
 
+	if cmd.Options != nil {
+		for _, opt := range cmd.Options {
+			if opt.IsRequired {
+				v, ok := namespace[opt.Name]
+				if !ok || v == nil {
+					return fmt.Errorf("Opt %s must be provided", opt.InvocationDisplay())
+				}
+			}
+		}
+	}
+
 	return cmd.OnExecute(namespace, processor)
 }
 
