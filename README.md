@@ -111,7 +111,7 @@ if err != nil {
     panic(err)
 }
 
-err = processor.Process(os.Args)
+err = processor.Process(os.Args[1:])
 ```
 
 ## Special commands / keystrokes
