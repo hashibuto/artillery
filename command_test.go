@@ -34,7 +34,36 @@ func TestCommandMissingArg(t *testing.T) {
 		t.Errorf("Should have thrown an error due to insufficient arguments (missing subtype)")
 		return
 	}
+}
 
+func TestCommandMissingRequiredOption(t *testing.T) {
+	input := ""
+	cmd := Command{
+		Name:        "add",
+		Description: "add an animal to the zoo",
+		Options: []*Option{
+			{
+				Name:        "animal",
+				ShortName:   'a',
+				Description: "type of animal",
+				IsRequired:  true,
+			},
+		},
+		OnExecute: func(ns Namespace, processor *Processor) error {
+			return nil
+		},
+	}
+
+	tokens, err := parse(input)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = cmd.Execute(tokens, nil, false)
+	if err == nil {
+		t.Errorf("Should have thrown an error due to insufficient arguments (missing subtype)")
+		return
+	}
 }
 
 func TestCommandExtraArg(t *testing.T) {

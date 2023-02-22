@@ -12,6 +12,7 @@ type Option struct {
 	Value       any // When value is specified, the option has an implicit value and cannot be provided with --opt=value
 	Default     any
 	IsArray     bool // When true, argument can be reused multiple times
+	IsRequired  bool // When true a value is required to be set
 }
 
 // Validate ensures the validity of the option
@@ -72,6 +73,10 @@ func (opt *Option) Apply(inp *OptionInput, namespace Namespace) error {
 		}
 		namespace[opt.Name] = append(arr, val)
 		return nil
+	}
+
+	if inp.Value == "" && opt.Value == nil && opt.Default == nil && opt.IsRequired {
+		return fmt.Errorf("Option %s is required", opt.InvocationDisplay())
 	}
 
 	if opt.Value != nil {
