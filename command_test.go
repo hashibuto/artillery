@@ -231,6 +231,18 @@ func TestCommandStringArrayDefaultOption(t *testing.T) {
 			},
 		},
 		OnExecute: func(ns Namespace, processor *Processor) error {
+
+			var args struct {
+				Animal    string
+				Attribute []string
+				Age       int
+			}
+
+			err := Reflect(ns, &args)
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 	}
