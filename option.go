@@ -91,7 +91,7 @@ func (opt *Option) ApplyArrayDefaults(namespace Namespace) {
 		}
 
 		if length == 0 && opt.Default != nil {
-			namespace[opt.Name] = val
+			namespace[opt.Name] = opt.Default
 		}
 	}
 }

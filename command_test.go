@@ -204,3 +204,45 @@ func TestCommandGroupArgs(t *testing.T) {
 		return
 	}
 }
+
+func TestCommandStringArrayDefaultOption(t *testing.T) {
+	input := "tiger"
+	cmd := Command{
+		Name:        "add",
+		Description: "add an animal to the zoo",
+		Arguments: []*Argument{
+			{
+				Name:        "animal",
+				Description: "type of animal",
+			},
+		},
+		Options: []*Option{
+			{
+				Name:        "attribute",
+				Description: "animal attribute",
+				ShortName:   'a',
+				Default:     []string{"blotchy", "skinny"},
+				IsArray:     true,
+			},
+			{
+				Name:        "age",
+				Description: "age of the animal",
+				Type:        Int,
+			},
+		},
+		OnExecute: func(ns Namespace, processor *Processor) error {
+			return nil
+		},
+	}
+
+	tokens, err := parse(input)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = cmd.Execute(tokens, nil, false)
+	if err == nil {
+		t.Errorf("Should have errored for unrecognized option")
+		return
+	}
+}
