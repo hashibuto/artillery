@@ -50,12 +50,49 @@ func (opt *Option) Validate() error {
 	return nil
 }
 
+func CreateEmptyArrayOfType(arrType ArgType) any {
+	switch arrType {
+	case String:
+		return []string{}
+	case Int:
+		return []int{}
+	case Float:
+		return []float64{}
+	case Bool:
+		return []bool{}
+	default:
+		return []string{}
+	}
+}
+
 // ApplyDefault applies the default value to the target
 func (opt *Option) ApplyDefault(namespace Namespace) {
 	if opt.IsArray {
-		namespace[opt.Name] = []any{}
+		namespace[opt.Name] = CreateEmptyArrayOfType(opt.Type)
 	} else {
 		namespace[opt.Name] = opt.Default
+	}
+}
+
+// ApplyArrayDefaults applies array defaults to the target if empty after processing
+func (opt *Option) ApplyArrayDefaults(namespace Namespace) {
+	if opt.IsArray {
+		val := namespace[opt.Name]
+		var length int
+		switch t := val.(type) {
+		case []string:
+			length = len(t)
+		case []int:
+			length = len(t)
+		case []float64:
+			length = len(t)
+		case []bool:
+			length = len(t)
+		}
+
+		if length == 0 && opt.Default != nil {
+			namespace[opt.Name] = val
+		}
 	}
 }
 
@@ -66,12 +103,21 @@ func (opt *Option) Apply(inp *OptionInput, namespace Namespace) error {
 			return fmt.Errorf("Value must be specified for option %s", opt.InvocationDisplay())
 		}
 
-		arr := namespace[opt.Name].([]any)
 		val, err := convert(inp.Value, opt.Type)
 		if err != nil {
 			return fmt.Errorf("Option %s - %s", opt.InvocationDisplay(), err)
 		}
-		namespace[opt.Name] = append(arr, val)
+
+		switch t := namespace[opt.Name].(type) {
+		case []string:
+			namespace[opt.Name] = append(t, val.(string))
+		case []int:
+			namespace[opt.Name] = append(t, val.(int))
+		case []float64:
+			namespace[opt.Name] = append(t, val.(float64))
+		case []bool:
+			namespace[opt.Name] = append(t, val.(bool))
+		}
 		return nil
 	}
 

@@ -41,7 +41,6 @@ type Command struct {
 	subCommandLookup  map[string]*Command
 	shortNameToName   map[string]string
 	nameToArgOrOption map[string]any
-	isInitialized     bool
 	parentCommand     *Command
 }
 
@@ -298,6 +297,10 @@ func (cmd *Command) Execute(tokens []any, processor *Processor, fromShell bool) 
 		default:
 			return fmt.Errorf("Option --%s is not recognized.  %s", optName, cmd.helpInvocationStr(fromShell))
 		}
+	}
+
+	for _, opt := range cmd.Options {
+		opt.ApplyArrayDefaults(namespace)
 	}
 
 	for idx, arg := range args {
