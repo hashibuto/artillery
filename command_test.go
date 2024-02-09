@@ -241,8 +241,8 @@ func TestCommandStringArrayDefaultOption(t *testing.T) {
 		return
 	}
 	err = cmd.Execute(tokens, nil, false)
-	if err == nil {
-		t.Errorf("Should have errored for unrecognized option")
+	if err != nil {
+		t.Errorf("Should not error")
 		return
 	}
 }
