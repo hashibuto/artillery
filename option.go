@@ -4,6 +4,21 @@ import (
 	"fmt"
 )
 
+func CreateEmptyArrayOfType(arrType ArgType) any {
+	switch arrType {
+	case String:
+		return []string{}
+	case Int:
+		return []int{}
+	case Float:
+		return []float64{}
+	case Bool:
+		return []bool{}
+	default:
+		return []string{}
+	}
+}
+
 type Option struct {
 	ShortName   byte
 	Name        string
@@ -48,21 +63,6 @@ func (opt *Option) Validate() error {
 	}
 
 	return nil
-}
-
-func CreateEmptyArrayOfType(arrType ArgType) any {
-	switch arrType {
-	case String:
-		return []string{}
-	case Int:
-		return []int{}
-	case Float:
-		return []float64{}
-	case Bool:
-		return []bool{}
-	default:
-		return []string{}
-	}
 }
 
 // ApplyDefault applies the default value to the target

@@ -299,6 +299,9 @@ func (cmd *Command) Execute(tokens []any, processor *Processor, fromShell bool) 
 		}
 	}
 
+	for _, arg := range cmd.Arguments {
+		arg.ApplyArrayDefaults(namespace)
+	}
 	for _, opt := range cmd.Options {
 		opt.ApplyArrayDefaults(namespace)
 	}

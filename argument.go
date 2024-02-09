@@ -46,9 +46,31 @@ func (arg *Argument) Validate(isLast bool) error {
 // ApplyDefault applies the default value to the target
 func (arg *Argument) ApplyDefault(namespace Namespace) {
 	if arg.IsArray {
-		namespace[arg.Name] = []any{}
+		namespace[arg.Name] = CreateEmptyArrayOfType(arg.Type)
 	} else {
 		namespace[arg.Name] = arg.Default
+	}
+}
+
+// ApplyArrayDefaults applies array defaults to the target if empty after processing
+func (arg *Argument) ApplyArrayDefaults(namespace Namespace) {
+	if arg.IsArray {
+		val := namespace[arg.Name]
+		var length int
+		switch t := val.(type) {
+		case []string:
+			length = len(t)
+		case []int:
+			length = len(t)
+		case []float64:
+			length = len(t)
+		case []bool:
+			length = len(t)
+		}
+
+		if length == 0 && arg.Default != nil {
+			namespace[arg.Name] = arg.Default
+		}
 	}
 }
 
@@ -58,7 +80,7 @@ func (arg *Argument) Usage() string {
 		return fmt.Sprintf("[%s]", arg.Name)
 	}
 
-	if arg.IsArray == true {
+	if arg.IsArray {
 		return fmt.Sprintf("<%s...>", arg.Name)
 	}
 
@@ -73,8 +95,16 @@ func (arg *Argument) Apply(inp string, namespace Namespace) error {
 	}
 
 	if arg.IsArray {
-		targ := namespace[arg.Name].([]any)
-		namespace[arg.Name] = append(targ, val)
+		switch t := namespace[arg.Name].(type) {
+		case []string:
+			namespace[arg.Name] = append(t, val.(string))
+		case []int:
+			namespace[arg.Name] = append(t, val.(int))
+		case []float64:
+			namespace[arg.Name] = append(t, val.(float64))
+		case []bool:
+			namespace[arg.Name] = append(t, val.(bool))
+		}
 		return nil
 	}
 
