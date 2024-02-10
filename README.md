@@ -1,9 +1,9 @@
 # artillery
-An interactive shell and CLI parser for golang
+An interactive shell/REPL and CLI parser for golang
 
-Artillery can function both as an interactive shell as well as a single command CLI parser.  In interactive mode, it uses [NilShell](https://github.com/hashibuto/nilshell) for the command line editor, completion, and history.
+Artillery can function both as an interactive shell or REPL, as well as a single command CLI parser.  In interactive mode, it uses [NilShell](https://github.com/hashibuto/nilshell) for the command line editor, completion, and history.
 
-## A basic interactive shell
+## A basic interactive shell/REPL
 
 ```
 import (
@@ -46,7 +46,7 @@ import (
                     message = strings.ToUpper(message)
                 }
                 return nil
-            },            
+            },
         },
 	}
 
@@ -101,7 +101,7 @@ helloCmd := &artillery.Command{
             message = strings.ToUpper(message)
         }
         return nil
-    },            
+    },
 }
 
 processor := artillery.NewProcessor()
