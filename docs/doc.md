@@ -8,43 +8,65 @@ import "github.com/hashibuto/artillery"
 
 ## Index
 
-- [func Reflect(namespace Namespace, obj any) error](<#func-reflect>)
-- [type ArgType](<#type-argtype>)
-- [type Argument](<#type-argument>)
-  - [func (arg *Argument) Apply(inp string, namespace Namespace) error](<#func-argument-apply>)
-  - [func (arg *Argument) ApplyDefault(namespace Namespace)](<#func-argument-applydefault>)
-  - [func (arg *Argument) Usage() string](<#func-argument-usage>)
-  - [func (arg *Argument) Validate(isLast bool) error](<#func-argument-validate>)
-- [type Command](<#type-command>)
-  - [func (cmd *Command) CompressTokens(tokens []any) ([]any, error)](<#func-command-compresstokens>)
-  - [func (cmd *Command) DisplayHelp()](<#func-command-displayhelp>)
-  - [func (cmd *Command) Execute(tokens []any, processor *Processor, fromShell bool) error](<#func-command-execute>)
-  - [func (cmd *Command) Fullname() string](<#func-command-fullname>)
-  - [func (cmd *Command) OnComplete(tokens []any, processor *Processor) []*ns.AutoComplete](<#func-command-oncomplete>)
-  - [func (cmd *Command) Prepare() error](<#func-command-prepare>)
-  - [func (cmd *Command) Process(cliArgs []string) error](<#func-command-process>)
-- [type CompletionFunc](<#type-completionfunc>)
-- [type Namespace](<#type-namespace>)
-- [type Option](<#type-option>)
-  - [func (opt *Option) Apply(inp *OptionInput, namespace Namespace) error](<#func-option-apply>)
-  - [func (opt *Option) ApplyDefault(namespace Namespace)](<#func-option-applydefault>)
-  - [func (opt *Option) ArgTypeDisplay() string](<#func-option-argtypedisplay>)
-  - [func (opt *Option) DefaultValueDisplay() string](<#func-option-defaultvaluedisplay>)
-  - [func (opt *Option) InvocationDisplay() string](<#func-option-invocationdisplay>)
-  - [func (opt *Option) Validate() error](<#func-option-validate>)
-- [type OptionInput](<#type-optioninput>)
-- [type Processor](<#type-processor>)
-  - [func NewProcessor() *Processor](<#func-newprocessor>)
-  - [func (p *Processor) AddCommand(cmd *Command) error](<#func-processor-addcommand>)
-  - [func (p *Processor) AddCommands(cmds ...*Command) error](<#func-processor-addcommands>)
-  - [func (p *Processor) OnComplete(beforeAndCursor string, afterCursor string, full string) []*ns.AutoComplete](<#func-processor-oncomplete>)
-  - [func (p *Processor) OnExecute(nilShell *ns.NilShell, input string)](<#func-processor-onexecute>)
-  - [func (p *Processor) Process(cliArgs []string) error](<#func-processor-process>)
-  - [func (p *Processor) RemoveBuiltins(removeHelp bool)](<#func-processor-removebuiltins>)
-  - [func (p *Processor) Shell() *ns.NilShell](<#func-processor-shell>)
+- [Variables](<#variables>)
+- [func CreateEmptyArrayOfType\(arrType ArgType\) any](<#CreateEmptyArrayOfType>)
+- [func Reflect\(namespace Namespace, obj any\) error](<#Reflect>)
+- [type ArgType](<#ArgType>)
+- [type Argument](<#Argument>)
+  - [func \(arg \*Argument\) Apply\(inp string, namespace Namespace\) error](<#Argument.Apply>)
+  - [func \(arg \*Argument\) ApplyArrayDefaults\(namespace Namespace\)](<#Argument.ApplyArrayDefaults>)
+  - [func \(arg \*Argument\) ApplyDefault\(namespace Namespace\)](<#Argument.ApplyDefault>)
+  - [func \(arg \*Argument\) Usage\(\) string](<#Argument.Usage>)
+  - [func \(arg \*Argument\) Validate\(isLast bool\) error](<#Argument.Validate>)
+- [type Command](<#Command>)
+  - [func \(cmd \*Command\) CompressTokens\(tokens \[\]any\) \(\[\]any, error\)](<#Command.CompressTokens>)
+  - [func \(cmd \*Command\) DisplayHelp\(\)](<#Command.DisplayHelp>)
+  - [func \(cmd \*Command\) Execute\(tokens \[\]any, processor \*Processor, fromShell bool\) error](<#Command.Execute>)
+  - [func \(cmd \*Command\) Fullname\(\) string](<#Command.Fullname>)
+  - [func \(cmd \*Command\) OnComplete\(tokens \[\]any, processor \*Processor\) \[\]\*ns.AutoComplete](<#Command.OnComplete>)
+  - [func \(cmd \*Command\) Prepare\(\) error](<#Command.Prepare>)
+  - [func \(cmd \*Command\) Process\(cliArgs \[\]string\) error](<#Command.Process>)
+- [type CompletionFunc](<#CompletionFunc>)
+- [type Namespace](<#Namespace>)
+- [type Option](<#Option>)
+  - [func \(opt \*Option\) Apply\(inp \*OptionInput, namespace Namespace\) error](<#Option.Apply>)
+  - [func \(opt \*Option\) ApplyArrayDefaults\(namespace Namespace\)](<#Option.ApplyArrayDefaults>)
+  - [func \(opt \*Option\) ApplyDefault\(namespace Namespace\)](<#Option.ApplyDefault>)
+  - [func \(opt \*Option\) ArgTypeDisplay\(\) string](<#Option.ArgTypeDisplay>)
+  - [func \(opt \*Option\) DefaultValueDisplay\(\) string](<#Option.DefaultValueDisplay>)
+  - [func \(opt \*Option\) InvocationDisplay\(\) string](<#Option.InvocationDisplay>)
+  - [func \(opt \*Option\) Validate\(\) error](<#Option.Validate>)
+- [type OptionInput](<#OptionInput>)
+- [type Processor](<#Processor>)
+  - [func NewProcessor\(\) \*Processor](<#NewProcessor>)
+  - [func \(p \*Processor\) AddCommand\(cmd \*Command\) error](<#Processor.AddCommand>)
+  - [func \(p \*Processor\) AddCommands\(cmds ...\*Command\) error](<#Processor.AddCommands>)
+  - [func \(p \*Processor\) OnComplete\(beforeAndCursor string, afterCursor string, full string\) \[\]\*ns.AutoComplete](<#Processor.OnComplete>)
+  - [func \(p \*Processor\) OnExecute\(nilShell \*ns.NilShell, input string\)](<#Processor.OnExecute>)
+  - [func \(p \*Processor\) Process\(cliArgs \[\]string\) error](<#Processor.Process>)
+  - [func \(p \*Processor\) RemoveBuiltins\(removeHelp bool\)](<#Processor.RemoveBuiltins>)
+  - [func \(p \*Processor\) Shell\(\) \*ns.NilShell](<#Processor.Shell>)
 
 
-## func [Reflect](<https://github.com/hashibuto/artillery/blob/master/reflection.go#L11>)
+## Variables
+
+<a name="Debug"></a>
+
+```go
+var Debug bool = false
+```
+
+<a name="CreateEmptyArrayOfType"></a>
+## func [CreateEmptyArrayOfType](<https://github.com/hashibuto/artillery/blob/master/option.go#L7>)
+
+```go
+func CreateEmptyArrayOfType(arrType ArgType) any
+```
+
+
+
+<a name="Reflect"></a>
+## func [Reflect](<https://github.com/hashibuto/artillery/blob/master/reflection.go#L10>)
 
 ```go
 func Reflect(namespace Namespace, obj any) error
@@ -52,11 +74,16 @@ func Reflect(namespace Namespace, obj any) error
 
 Reflect attempts to reflect the data in namespace to the provided object
 
+<a name="ArgType"></a>
 ## type [ArgType](<https://github.com/hashibuto/artillery/blob/master/command.go#L15>)
+
+
 
 ```go
 type ArgType string
 ```
+
+<a name="String"></a>
 
 ```go
 const (
@@ -67,7 +94,10 @@ const (
 )
 ```
 
+<a name="Argument"></a>
 ## type [Argument](<https://github.com/hashibuto/artillery/blob/master/argument.go#L9-L17>)
+
+
 
 ```go
 type Argument struct {
@@ -81,14 +111,25 @@ type Argument struct {
 }
 ```
 
-### func \(\*Argument\) [Apply](<https://github.com/hashibuto/artillery/blob/master/argument.go#L69>)
+<a name="Argument.Apply"></a>
+### func \(\*Argument\) [Apply](<https://github.com/hashibuto/artillery/blob/master/argument.go#L91>)
 
 ```go
 func (arg *Argument) Apply(inp string, namespace Namespace) error
 ```
 
-Apply will apply the input to the target.  If input is nil then the default will be applied
+Apply will apply the input to the target. If input is nil then the default will be applied
 
+<a name="Argument.ApplyArrayDefaults"></a>
+### func \(\*Argument\) [ApplyArrayDefaults](<https://github.com/hashibuto/artillery/blob/master/argument.go#L56>)
+
+```go
+func (arg *Argument) ApplyArrayDefaults(namespace Namespace)
+```
+
+ApplyArrayDefaults applies array defaults to the target if empty after processing
+
+<a name="Argument.ApplyDefault"></a>
 ### func \(\*Argument\) [ApplyDefault](<https://github.com/hashibuto/artillery/blob/master/argument.go#L47>)
 
 ```go
@@ -97,7 +138,8 @@ func (arg *Argument) ApplyDefault(namespace Namespace)
 
 ApplyDefault applies the default value to the target
 
-### func \(\*Argument\) [Usage](<https://github.com/hashibuto/artillery/blob/master/argument.go#L56>)
+<a name="Argument.Usage"></a>
+### func \(\*Argument\) [Usage](<https://github.com/hashibuto/artillery/blob/master/argument.go#L78>)
 
 ```go
 func (arg *Argument) Usage() string
@@ -105,6 +147,7 @@ func (arg *Argument) Usage() string
 
 Usage displays the usage pattern string
 
+<a name="Argument.Validate"></a>
 ### func \(\*Argument\) [Validate](<https://github.com/hashibuto/artillery/blob/master/argument.go#L20>)
 
 ```go
@@ -113,7 +156,10 @@ func (arg *Argument) Validate(isLast bool) error
 
 Validate ensures the validity of the argument
 
-## type [Command](<https://github.com/hashibuto/artillery/blob/master/command.go#L28-L46>)
+<a name="Command"></a>
+## type [Command](<https://github.com/hashibuto/artillery/blob/master/command.go#L28-L45>)
+
+
 
 ```go
 type Command struct {
@@ -131,7 +177,8 @@ type Command struct {
 }
 ```
 
-### func \(\*Command\) [CompressTokens](<https://github.com/hashibuto/artillery/blob/master/command.go#L399>)
+<a name="Command.CompressTokens"></a>
+### func \(\*Command\) [CompressTokens](<https://github.com/hashibuto/artillery/blob/master/command.go#L416>)
 
 ```go
 func (cmd *Command) CompressTokens(tokens []any) ([]any, error)
@@ -139,7 +186,8 @@ func (cmd *Command) CompressTokens(tokens []any) ([]any, error)
 
 CompressTokens compresses any token/value pairs where required into a single \*Option.
 
-### func \(\*Command\) [DisplayHelp](<https://github.com/hashibuto/artillery/blob/master/command.go#L163>)
+<a name="Command.DisplayHelp"></a>
+### func \(\*Command\) [DisplayHelp](<https://github.com/hashibuto/artillery/blob/master/command.go#L162>)
 
 ```go
 func (cmd *Command) DisplayHelp()
@@ -147,7 +195,8 @@ func (cmd *Command) DisplayHelp()
 
 DisplayHelp displays contextual help for the command
 
-### func \(\*Command\) [Execute](<https://github.com/hashibuto/artillery/blob/master/command.go#L241>)
+<a name="Command.Execute"></a>
+### func \(\*Command\) [Execute](<https://github.com/hashibuto/artillery/blob/master/command.go#L240>)
 
 ```go
 func (cmd *Command) Execute(tokens []any, processor *Processor, fromShell bool) error
@@ -155,7 +204,8 @@ func (cmd *Command) Execute(tokens []any, processor *Processor, fromShell bool) 
 
 Execute attempts to execute the supplied argument tokens after evaluating the input against the specified rules.
 
-### func \(\*Command\) [Fullname](<https://github.com/hashibuto/artillery/blob/master/command.go#L151>)
+<a name="Command.Fullname"></a>
+### func \(\*Command\) [Fullname](<https://github.com/hashibuto/artillery/blob/master/command.go#L150>)
 
 ```go
 func (cmd *Command) Fullname() string
@@ -163,13 +213,17 @@ func (cmd *Command) Fullname() string
 
 Fullname returns the command include the parent command
 
-### func \(\*Command\) [OnComplete](<https://github.com/hashibuto/artillery/blob/master/command.go#L332>)
+<a name="Command.OnComplete"></a>
+### func \(\*Command\) [OnComplete](<https://github.com/hashibuto/artillery/blob/master/command.go#L349>)
 
 ```go
 func (cmd *Command) OnComplete(tokens []any, processor *Processor) []*ns.AutoComplete
 ```
 
-### func \(\*Command\) [Prepare](<https://github.com/hashibuto/artillery/blob/master/command.go#L50>)
+
+
+<a name="Command.Prepare"></a>
+### func \(\*Command\) [Prepare](<https://github.com/hashibuto/artillery/blob/master/command.go#L49>)
 
 ```go
 func (cmd *Command) Prepare() error
@@ -177,27 +231,37 @@ func (cmd *Command) Prepare() error
 
 Prepare establishes the validity of the command as well as prepares various optimizations, and returns an error on the first validation violation
 
-### func \(\*Command\) [Process](<https://github.com/hashibuto/artillery/blob/master/command.go#L234>)
+<a name="Command.Process"></a>
+### func \(\*Command\) [Process](<https://github.com/hashibuto/artillery/blob/master/command.go#L233>)
 
 ```go
 func (cmd *Command) Process(cliArgs []string) error
 ```
 
-Process processes the supplied cliArgs as though this were a standalone commmand.  This is useful for processing arguments directly from the cli
+Process processes the supplied cliArgs as though this were a standalone commmand. This is useful for processing arguments directly from the cli
 
+<a name="CompletionFunc"></a>
 ## type [CompletionFunc](<https://github.com/hashibuto/artillery/blob/master/argument.go#L7>)
+
+
 
 ```go
 type CompletionFunc func(prefix string, processor *Processor) []string
 ```
 
+<a name="Namespace"></a>
 ## type [Namespace](<https://github.com/hashibuto/artillery/blob/master/command.go#L26>)
+
+
 
 ```go
 type Namespace map[string]any
 ```
 
-## type [Option](<https://github.com/hashibuto/artillery/blob/master/option.go#L7-L15>)
+<a name="Option"></a>
+## type [Option](<https://github.com/hashibuto/artillery/blob/master/option.go#L22-L31>)
+
+
 
 ```go
 type Option struct {
@@ -208,18 +272,30 @@ type Option struct {
     Value       any // When value is specified, the option has an implicit value and cannot be provided with --opt=value
     Default     any
     IsArray     bool // When true, argument can be reused multiple times
+    IsRequired  bool // When true a value is required to be set
 }
 ```
 
-### func \(\*Option\) [Apply](<https://github.com/hashibuto/artillery/blob/master/option.go#L62>)
+<a name="Option.Apply"></a>
+### func \(\*Option\) [Apply](<https://github.com/hashibuto/artillery/blob/master/option.go#L100>)
 
 ```go
 func (opt *Option) Apply(inp *OptionInput, namespace Namespace) error
 ```
 
-Apply will apply the input to the namespace.  If input is nil then the default will be applied
+Apply will apply the input to the namespace. If input is nil then the default will be applied
 
-### func \(\*Option\) [ApplyDefault](<https://github.com/hashibuto/artillery/blob/master/option.go#L53>)
+<a name="Option.ApplyArrayDefaults"></a>
+### func \(\*Option\) [ApplyArrayDefaults](<https://github.com/hashibuto/artillery/blob/master/option.go#L78>)
+
+```go
+func (opt *Option) ApplyArrayDefaults(namespace Namespace)
+```
+
+ApplyArrayDefaults applies array defaults to the target if empty after processing
+
+<a name="Option.ApplyDefault"></a>
+### func \(\*Option\) [ApplyDefault](<https://github.com/hashibuto/artillery/blob/master/option.go#L69>)
 
 ```go
 func (opt *Option) ApplyDefault(namespace Namespace)
@@ -227,7 +303,8 @@ func (opt *Option) ApplyDefault(namespace Namespace)
 
 ApplyDefault applies the default value to the target
 
-### func \(\*Option\) [ArgTypeDisplay](<https://github.com/hashibuto/artillery/blob/master/option.go#L114>)
+<a name="Option.ArgTypeDisplay"></a>
+### func \(\*Option\) [ArgTypeDisplay](<https://github.com/hashibuto/artillery/blob/master/option.go#L165>)
 
 ```go
 func (opt *Option) ArgTypeDisplay() string
@@ -235,7 +312,8 @@ func (opt *Option) ArgTypeDisplay() string
 
 ArgTypeDisplay returns the argument data type for display
 
-### func \(\*Option\) [DefaultValueDisplay](<https://github.com/hashibuto/artillery/blob/master/option.go#L124>)
+<a name="Option.DefaultValueDisplay"></a>
+### func \(\*Option\) [DefaultValueDisplay](<https://github.com/hashibuto/artillery/blob/master/option.go#L175>)
 
 ```go
 func (opt *Option) DefaultValueDisplay() string
@@ -243,7 +321,8 @@ func (opt *Option) DefaultValueDisplay() string
 
 DefaultValueDisplay returns the default value for display purposes
 
-### func \(\*Option\) [InvocationDisplay](<https://github.com/hashibuto/artillery/blob/master/option.go#L99>)
+<a name="Option.InvocationDisplay"></a>
+### func \(\*Option\) [InvocationDisplay](<https://github.com/hashibuto/artillery/blob/master/option.go#L150>)
 
 ```go
 func (opt *Option) InvocationDisplay() string
@@ -251,7 +330,8 @@ func (opt *Option) InvocationDisplay() string
 
 InvocationDisplay returns the help name for the option
 
-### func \(\*Option\) [Validate](<https://github.com/hashibuto/artillery/blob/master/option.go#L18>)
+<a name="Option.Validate"></a>
+### func \(\*Option\) [Validate](<https://github.com/hashibuto/artillery/blob/master/option.go#L34>)
 
 ```go
 func (opt *Option) Validate() error
@@ -259,7 +339,10 @@ func (opt *Option) Validate() error
 
 Validate ensures the validity of the option
 
+<a name="OptionInput"></a>
 ## type [OptionInput](<https://github.com/hashibuto/artillery/blob/master/parser.go#L20-L23>)
+
+
 
 ```go
 type OptionInput struct {
@@ -268,7 +351,10 @@ type OptionInput struct {
 }
 ```
 
+<a name="Processor"></a>
 ## type [Processor](<https://github.com/hashibuto/artillery/blob/master/processor.go#L15-L24>)
+
+
 
 ```go
 type Processor struct {
@@ -278,20 +364,25 @@ type Processor struct {
 }
 ```
 
+<a name="NewProcessor"></a>
 ### func [NewProcessor](<https://github.com/hashibuto/artillery/blob/master/processor.go#L26>)
 
 ```go
 func NewProcessor() *Processor
 ```
 
+
+
+<a name="Processor.AddCommand"></a>
 ### func \(\*Processor\) [AddCommand](<https://github.com/hashibuto/artillery/blob/master/processor.go#L78>)
 
 ```go
 func (p *Processor) AddCommand(cmd *Command) error
 ```
 
-AddCommand adds a command to the processor.  If the command is in some way invalid, an error will be returned here.
+AddCommand adds a command to the processor. If the command is in some way invalid, an error will be returned here.
 
+<a name="Processor.AddCommands"></a>
 ### func \(\*Processor\) [AddCommands](<https://github.com/hashibuto/artillery/blob/master/processor.go#L66>)
 
 ```go
@@ -300,26 +391,34 @@ func (p *Processor) AddCommands(cmds ...*Command) error
 
 AddCommands adds several commands to the processor at once
 
+<a name="Processor.OnComplete"></a>
 ### func \(\*Processor\) [OnComplete](<https://github.com/hashibuto/artillery/blob/master/processor.go#L190>)
 
 ```go
 func (p *Processor) OnComplete(beforeAndCursor string, afterCursor string, full string) []*ns.AutoComplete
 ```
 
+
+
+<a name="Processor.OnExecute"></a>
 ### func \(\*Processor\) [OnExecute](<https://github.com/hashibuto/artillery/blob/master/processor.go#L113>)
 
 ```go
 func (p *Processor) OnExecute(nilShell *ns.NilShell, input string)
 ```
 
+
+
+<a name="Processor.Process"></a>
 ### func \(\*Processor\) [Process](<https://github.com/hashibuto/artillery/blob/master/processor.go#L95>)
 
 ```go
 func (p *Processor) Process(cliArgs []string) error
 ```
 
-Process processes the supplied cliArgs as though this were a standalone commmand.  This is useful for processing arguments directly from the cli
+Process processes the supplied cliArgs as though this were a standalone commmand. This is useful for processing arguments directly from the cli
 
+<a name="Processor.RemoveBuiltins"></a>
 ### func \(\*Processor\) [RemoveBuiltins](<https://github.com/hashibuto/artillery/blob/master/processor.go#L52>)
 
 ```go
@@ -328,6 +427,7 @@ func (p *Processor) RemoveBuiltins(removeHelp bool)
 
 RemoveBuiltins removes all builtin commands including the help command if specified
 
+<a name="Processor.Shell"></a>
 ### func \(\*Processor\) [Shell](<https://github.com/hashibuto/artillery/blob/master/processor.go#L61>)
 
 ```go
@@ -335,7 +435,5 @@ func (p *Processor) Shell() *ns.NilShell
 ```
 
 Shell returns the underlying NilShell instance
-
-
 
 Generated by [gomarkdoc](<https://github.com/princjef/gomarkdoc>)
