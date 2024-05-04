@@ -11,7 +11,7 @@ import (
 
 type helpCommandArgs struct {
 	Verbose bool
-	Command []any
+	Command []string
 }
 
 func makeHelpCommand() *Command {
@@ -89,10 +89,9 @@ func makeHelpCommand() *Command {
 				var ok bool
 				curLookup := processor.commandLookup
 				for _, cmdName := range helpArgs.Command {
-					cmdNameStr := cmdName.(string)
-					curCommand, ok = curLookup[cmdNameStr]
+					curCommand, ok = curLookup[cmdName]
 					if !ok {
-						return fmt.Errorf("Unknown command or subcommand \"%s\"", cmdNameStr)
+						return fmt.Errorf("unknown command or subcommand \"%s\"", cmdName)
 					}
 					curLookup = curCommand.subCommandLookup
 				}
