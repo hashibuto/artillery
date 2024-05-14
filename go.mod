@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/hashibuto/mirage v0.2.6
-	github.com/hashibuto/nilshell v0.1.15
+	github.com/hashibuto/nilshell v0.1.16
 )
 
 require (
