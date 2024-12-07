@@ -1,3 +1,5 @@
+This repository has been archived, please consider the project's successor: https://github.com/hashibuto/commander
+
 # artillery
 An interactive shell/REPL and CLI parser for golang
 
